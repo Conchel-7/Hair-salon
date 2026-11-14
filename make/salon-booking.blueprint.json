@@ -117,19 +117,19 @@
           },
           {
             "name": "customer_state",
-            "value": "{{if(2.status = \"draft\"; \"draft\"; if(ifempty(2.`add calender_event-id`; \"none\") != \"none\" & ifempty(2.date; \"2000-01-01\") >= formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); \"booking\"; \"new\"))}}"
+            "value": "{{if(2.status = \"draft\"; \"draft\"; if(ifempty(2.`add calender_event-id`; \"none\") != \"none\" & addDays(parseDate(ifempty(2.date; \"2000-01-01\"); \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); 1) > now; \"booking\"; \"new\"))}}"
           },
           {
             "name": "saved_service",
-            "value": "{{if(2.status = \"draft\" | ifempty(2.date; \"2000-01-01\") >= formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); 2.service; emptystring)}}"
+            "value": "{{if(2.status = \"draft\" | addDays(parseDate(ifempty(2.date; \"2000-01-01\"); \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); 1) > now; 2.service; emptystring)}}"
           },
           {
             "name": "saved_date",
-            "value": "{{if(2.status = \"draft\" | ifempty(2.date; \"2000-01-01\") >= formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); 2.date; emptystring)}}"
+            "value": "{{if(2.status = \"draft\" | addDays(parseDate(ifempty(2.date; \"2000-01-01\"); \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); 1) > now; 2.date; emptystring)}}"
           },
           {
             "name": "saved_time",
-            "value": "{{if(2.status = \"draft\" | ifempty(2.date; \"2000-01-01\") >= formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); 2.time; emptystring)}}"
+            "value": "{{if(2.status = \"draft\" | addDays(parseDate(ifempty(2.date; \"2000-01-01\"); \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); 1) > now; 2.time; emptystring)}}"
           },
           {
             "name": "booking_summary",
@@ -299,6 +299,10 @@
                     "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Knotless braids\"; 5; \"Box braids\"; 5; \"Wig installation\"; 2; \"Hair treatment\"; 1; emptystring)}}"
                   },
                   {
+                    "name": "minus_hours",
+                    "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Knotless braids\"; -5; \"Box braids\"; -5; \"Wig installation\"; -2; \"Hair treatment\"; -1; emptystring)}}"
+                  },
+                  {
                     "name": "start",
                     "value": "{{parseDate(ifempty(ifempty(6.date; 3.saved_date); \"2000-01-01\") + \" \" + ifempty(ifempty(6.time; 3.saved_time); \"00:00\"); \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\")}}"
                   }
@@ -330,7 +334,7 @@
                   },
                   {
                     "name": "slot_problem",
-                    "value": "{{if(contains(3.closed_days; formatDate(7.start; \"dddd\"; \"Africa/Johannesburg\")); \"Sorry, we're closed on \" + formatDate(7.start; \"dddd\"; \"Africa/Johannesburg\") + \"s. We're open \" + 3.opening_time + \" to \" + 3.closing_time + \". Please choose another day.\"; if(7.start < addHours(now; 3.notice_hours); \"That time has already passed or is too soon. Please choose a time at least \" + 3.notice_hours + \" hours from now.\"; if(7.start > addDays(now; 3.days_ahead); \"We can only take bookings up to \" + 3.days_ahead + \" days ahead. Please choose an earlier date.\"; if(formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\") < 3.opening_time; \"We open at \" + 3.opening_time + \". Please choose a later time.\"; if(formatDate(addHours(7.start; 7.hours); \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\") > formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.closing_time; 7.service + \" takes about \" + 7.hours + \" hours and we close at \" + 3.closing_time + \", so the latest start time is *\" + formatDate(addHours(parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.closing_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); 7.hours * -1); \"HH:mm\"; \"Africa/Johannesburg\") + \"*. Please choose an earlier time.\"; emptystring)))))}}"
+                    "value": "{{if(contains(3.closed_days; formatDate(7.start; \"dddd\"; \"Africa/Johannesburg\")); \"Sorry, we're closed on \" + formatDate(7.start; \"dddd\"; \"Africa/Johannesburg\") + \"s. We're open \" + 3.opening_time + \" to \" + 3.closing_time + \". Please choose another day.\"; if(7.start < addHours(now; 3.notice_hours); \"That time has already passed or is too soon. Please choose a time at least \" + 3.notice_hours + \" hours from now.\"; if(7.start > addDays(now; 3.days_ahead); \"We can only take bookings up to \" + 3.days_ahead + \" days ahead. Please choose an earlier date.\"; if(7.start < parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.opening_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); \"We open at \" + 3.opening_time + \". Please choose a later time.\"; if(addHours(7.start; 7.hours) > parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.closing_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); 7.service + \" takes about \" + 7.hours + \" hours and we close at \" + 3.closing_time + \", so the latest start time is *\" + formatDate(addHours(parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.closing_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); 7.minus_hours); \"HH:mm\"; \"Africa/Johannesburg\") + \"*. Please choose an earlier time.\"; emptystring)))))}}"
                   }
                 ],
                 "scope": "roundtrip"
@@ -400,7 +404,7 @@
                         "__IMTCONN__": 11354421
                       },
                       "mapper": {
-                        "limit": 10,
+                        "limit": 1,
                         "timeMin": "{{7.start}}",
                         "timeMax": "{{addHours(7.start; 7.hours)}}",
                         "calendar": "YOUR_GOOGLE_CALENDAR_ID",
@@ -435,34 +439,14 @@
                       }
                     },
                     {
-                      "id": 12,
-                      "module": "builtin:BasicAggregator",
-                      "version": 1,
-                      "parameters": {
-                        "feeder": 11
-                      },
-                      "mapper": {
-                        "id": "{{11.id}}"
-                      },
-                      "metadata": {
-                        "designer": {
-                          "x": 3300,
-                          "y": 0,
-                          "name": "Collect clashing events"
-                        }
-                      }
-                    },
-                    {
                       "id": 13,
                       "module": "builtin:BasicRouter",
                       "version": 1,
-                      "parameters": {
-                        "else": 1
-                      },
+                      "parameters": null,
                       "mapper": null,
                       "metadata": {
                         "designer": {
-                          "x": 3600,
+                          "x": 3300,
                           "y": 0,
                           "name": "Free or taken?"
                         }
@@ -491,7 +475,7 @@
                               },
                               "metadata": {
                                 "designer": {
-                                  "x": 3900,
+                                  "x": 3600,
                                   "y": 0,
                                   "name": "Create calendar event"
                                 }
@@ -501,7 +485,7 @@
                                 "conditions": [
                                   [
                                     {
-                                      "a": "{{length(remove(map(12.array; \"id\"); 2.`add calender_event-id`))}}",
+                                      "a": "{{11.`__IMTLENGTH__`}}",
                                       "o": "number:equal",
                                       "b": "0"
                                     }
@@ -533,7 +517,7 @@
                               },
                               "metadata": {
                                 "designer": {
-                                  "x": 4200,
+                                  "x": 3900,
                                   "y": 0,
                                   "name": "Save booking"
                                 }
@@ -557,7 +541,7 @@
                               },
                               "metadata": {
                                 "designer": {
-                                  "x": 4500,
+                                  "x": 4200,
                                   "y": 0,
                                   "name": "Send booking details"
                                 }
@@ -576,7 +560,7 @@
                               },
                               "metadata": {
                                 "designer": {
-                                  "x": 4800,
+                                  "x": 4500,
                                   "y": 0,
                                   "name": "Remove old event (reschedule)"
                                 }
@@ -602,7 +586,7 @@
                                   "mapper": {},
                                   "metadata": {
                                     "designer": {
-                                      "x": 4800,
+                                      "x": 4500,
                                       "y": 250
                                     }
                                   }
@@ -631,14 +615,22 @@
                               },
                               "metadata": {
                                 "designer": {
-                                  "x": 3900,
+                                  "x": 3600,
                                   "y": 400,
                                   "name": "Send: slot taken"
                                 }
                               },
                               "filter": {
                                 "name": "Slot is taken",
-                                "conditions": null
+                                "conditions": [
+                                  [
+                                    {
+                                      "a": "{{11.`__IMTLENGTH__`}}",
+                                      "o": "number:greater",
+                                      "b": "0"
+                                    }
+                                  ]
+                                ]
                               }
                             }
                           ]

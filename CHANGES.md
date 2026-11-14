@@ -1,6 +1,6 @@
 # What changed from the old version (blueprint 17)
 
-## Fewer, simpler modules: 45 → 32
+## Fewer, simpler modules: 45 → 31
 
 | Old | New |
 |---|---|
@@ -18,18 +18,16 @@
    bookings were saved with **R0**, and other paths kept an old price.
 2. **Rescheduling skipped the booking rules.** A customer could move an appointment to a Sunday,
    to 22:00, or to a date in the past. The same rules now apply to new bookings and reschedules.
-3. **Moving an appointment by an hour said "unavailable".** The calendar search found the
-   customer's *own* appointment and treated it as a clash. Their own event is now ignored.
-4. **Customers could never book again after their appointment.** The old appointment stayed
+3. **Customers could never book again after their appointment.** The old appointment stayed
    "active" forever. Appointments in the past now no longer count.
-5. **Customers waiting to pay got the same canned reply to every message** – the AI never ran,
+4. **Customers waiting to pay got the same canned reply to every message** – the AI never ran,
    so "what's your address?" got "please send your payment screenshot". Now the AI answers.
-6. **Any photo got "I already have your proof of payment"** – even from someone who never booked.
+5. **Any photo got "I already have your proof of payment"** – even from someone who never booked.
    The reply now depends on the situation.
-7. **Voice notes, stickers and videos got no reply at all.** They now get "please type your message".
-8. **If the AI failed or returned bad JSON, the customer got silence**, and after 3 errors in a row
+6. **Voice notes, stickers and videos got no reply at all.** They now get "please type your message".
+7. **If the AI failed or returned bad JSON, the customer got silence**, and after 3 errors in a row
    Make switches the scenario off. Both cases now send a polite "please send that again" message.
-9. **A "yes" could cancel an appointment by accident.** Cancelling now only happens when the bot's
+8. **A "yes" could cancel an appointment by accident.** Cancelling now only happens when the bot's
    previous message was the cancellation question *and* the customer agreed.
 
 ## Easier for customers
@@ -48,3 +46,12 @@ The approval link and token used to be written straight into the email module. T
 module 3 and **not** stored in this public repo. Because the old token was in a shared file,
 consider changing `approval_token` (in module 3 *and* in your approval scenario) to something
 long and random.
+
+## Version 2 fixes (after testing)
+
+- Claude's *Max Tokens* was sent as text, so the AI failed on every message. Now a number.
+- Every time came back "already taken": an extra step that collected calendar results counted
+  an empty result as a clash. Removed. The calendar is now checked exactly like the original
+  scenario did (search with limit 1, then count the results).
+- Date and time rules now compare real dates instead of text, so "is the appointment over?",
+  opening and closing times all use proper date maths.

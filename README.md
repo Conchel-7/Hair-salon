@@ -27,7 +27,7 @@ The new version splits the job in two:
 Because Make (not the AI) writes every message that *promises* something, the bot can't
 accidentally tell a customer they're booked when they're not.
 
-### The flow (32 modules, was 45)
+### The flow (31 modules, was 45)
 
 ```
 1 WhatsApp message in
@@ -35,7 +35,7 @@ accidentally tell a customer they're booked when they're not.
 │
 ├── TEXT ─ 5 AI: understand ─ 6 Read AI answer ─ 7 Booking details ─ 8 Booking check ─ 9 Save conversation ─ 10 Router
 │                                                                                           │
-│      ├── Ready to check calendar ─ 11 Find clashing events ─ 12 Collect ─ 13 Router
+│      ├── Ready to check calendar ─ 11 Find clashing events ─ 13 Router
 │      │        ├── Free  ─ 14 Create event ─ 15 Save booking ─ 16 Send details ─ 17 Remove old event (reschedule only)
 │      │        └── Taken ─ 18 Send "slot taken"
 │      ├── Cancel confirmed ─ 19 Delete event ─ 20 Delete record ─ 21 Send "cancelled"
@@ -106,18 +106,18 @@ blocks bookings automatically.
 
 ---
 
-## Things to double-check after import
+## Known limits
 
-These parts were written by hand and could not be test-run outside your Make account:
-
-- **Module 12 (Array aggregator)** – lets the flow continue when the calendar search finds nothing,
-  and lets a customer move their appointment by an hour without clashing with *themselves*.
-  The "Slot is free" filter on module 14 uses `length(remove(map(12.array; "id"); …))`.
-- **Module 50 (Resume)** – should contain the fallback JSON in its `result` field.
-- **Calendar titles** – new events are called `PENDING - name - service`. When a *confirmed*
+- **One booking at a time for the whole salon.** Any event in the calendar blocks that time.
+  Use a calendar that only holds salon bookings.
+- **Moving an appointment to a time that overlaps its own current slot** (e.g. one hour later on
+  the same day) says "taken". Moving it to any other free time works. This is deliberate: it can
+  never double-book.
+- **Calendar titles:** new events are called `PENDING - name - service`. When a *confirmed*
   customer reschedules, the new event is called `CONFIRMED - …` only if your approval scenario
-  writes `confirmed` into `status`. If it uses another word, change it in module 14's title.
-- **The approval scenario** (the separate webhook that handles Approve/Reject) is not in this
-  blueprint. It should keep working because the field names didn't change.
+  writes `confirmed` into `status`.
+- **The approval scenario** (the webhook behind the Approve/Reject links) is not in this blueprint.
+- **WhatsApp 24-hour rule:** a confirmation sent more than 24 hours after the customer's last
+  message needs an approved WhatsApp template.
 
 See [CHANGES.md](CHANGES.md) for the list of bugs fixed compared with the old version.
