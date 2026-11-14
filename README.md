@@ -1,2 +1,123 @@
-# Hair-salon
-modules
+# Hair Salon – WhatsApp Booking Bot (Make.com)
+
+A WhatsApp assistant that lets salon customers **ask questions, book, reschedule and cancel
+appointments, and send proof of payment** — built in Make.com with Claude, Google Calendar,
+a Make Data Store and Gmail.
+
+The scenario blueprint is in [`make/salon-booking.blueprint.json`](make/salon-booking.blueprint.json).
+The copy in this repo has personal details replaced with placeholders (this repo is public) –
+see [Setup](#setup).
+
+---
+
+## How it works (the big idea)
+
+The old version had 45 modules because the AI was asked to *decide everything* (prices,
+statuses, what to keep, what to overwrite), and then many routers double-checked it.
+
+The new version splits the job in two:
+
+| The **AI** only does language | **Make** does all the rules |
+|---|---|
+| Works out what the customer wants: `book`, `reschedule`, `cancel_request`, `cancel_confirm` or `chat` | Prices and durations |
+| Pulls out name, service, date, time – understands "tomorrow at 2pm" | Opening hours, closed days, notice period |
+| Writes friendly answers to questions | Calendar availability, creating / moving / deleting events |
+| | Every message that confirms, moves or cancels something |
+
+Because Make (not the AI) writes every message that *promises* something, the bot can't
+accidentally tell a customer they're booked when they're not.
+
+### The flow (32 modules, was 45)
+
+```
+1 WhatsApp message in
+2 Get customer record ── 3 SALON SETTINGS ── 4 Router: what kind of message?
+│
+├── TEXT ─ 5 AI: understand ─ 6 Read AI answer ─ 7 Booking details ─ 8 Booking check ─ 9 Save conversation ─ 10 Router
+│                                                                                           │
+│      ├── Ready to check calendar ─ 11 Find clashing events ─ 12 Collect ─ 13 Router
+│      │        ├── Free  ─ 14 Create event ─ 15 Save booking ─ 16 Send details ─ 17 Remove old event (reschedule only)
+│      │        └── Taken ─ 18 Send "slot taken"
+│      ├── Cancel confirmed ─ 19 Delete event ─ 20 Delete record ─ 21 Send "cancelled"
+│      └── Everything else ─ 22 Send reply
+│
+├── PROOF OF PAYMENT (photo/PDF while awaiting payment)
+│        23 Download ─ 24 Email owner (approve/reject links) ─ 25 Mark "payment_review" ─ 26 Send "thank you"
+│
+└── ANYTHING ELSE (voice notes, stickers, random photos) ─ 27 Send "please type"
+
+Safety nets (error handlers): 50 AI is down → polite retry message · 51/52 AI answer unreadable → polite retry
+53 old event already gone → carry on · 54 event already deleted → carry on
+```
+
+### What gets saved per customer (Data Store, key = phone number)
+
+| Field | Meaning |
+|---|---|
+| `name`, `service`, `date`, `time`, `price` | The booking (or the details collected so far) |
+| `status` | `draft` → `awaiting_payment` → `payment_review` → `confirmed` *(set by your approval scenario)* |
+| `add calender_event-id` | The Google Calendar event (empty while still a draft) |
+| `reply` | The last message the bot sent – gives the AI conversation context and makes "YES" to cancel safe |
+| `payment status`, `is_complete` | No longer used – can be deleted later |
+
+---
+
+## Setup
+
+1. **Back up first.** In Make, open your current scenario → `…` → *Export Blueprint*, keep that file.
+   Then **turn the old scenario OFF** (only one scenario can use the WhatsApp webhook).
+2. Create a new scenario → `…` → *Import Blueprint* → choose the file.
+   - Use the private file you were sent (it has your real calendar, emails and approval link) **or**
+     use the repo file and replace the placeholders: `YOUR_GOOGLE_CALENDAR_ID` (modules 11, 14, 17, 19)
+     and the owner email / approval link / token in module **3 SALON SETTINGS**.
+3. Click each module with a red warning (if any) and re-select the connection / data store.
+4. Open module **6 Read AI answer**: it has no data structure on purpose. Make shows the AI fields in
+   grey until the scenario has run once – that's normal.
+5. Run the [test checklist](TESTING.md), then switch the scenario ON.
+
+---
+
+## Day-to-day maintenance
+
+**Almost everything lives in module 3 – `SALON SETTINGS (edit here)`:**
+
+| Setting | Example | Used for |
+|---|---|---|
+| `salon_name`, `bot_name` | Conchel's Hair Salon, Maia | Greeting / AI personality |
+| `services` | `• Box braids – R700 (about 5 hours)` | What the AI tells customers |
+| `opening_time`, `closing_time` | 08:00, 17:00 | Booking rules |
+| `closed_days` | `Sunday` or `Sunday, Monday` | Booking rules |
+| `days_ahead`, `notice_hours` | 60, 2 | How far ahead / how soon people can book |
+| `extra_info` | Address, parking, cancellation policy… | Extra facts the AI may answer with |
+| `payment_details` | Bank details | Sent after a booking request |
+| `owner_email` | | Payment emails + customer help |
+| `approval_link`, `approval_token` | | Approve / reject links in the email |
+
+### Adding a service or changing a price – 2 places
+
+1. Module **3** → `services` (the text customers see).
+2. Module **7 Booking details** → `price` and `hours` (the numbers the system uses).
+   Add the new name to **both** formulas, spelled exactly the same as in step 1.
+
+### Blocking a day off or a lunch break
+
+Just add an event to the salon Google Calendar. Any event in that time (including all-day events)
+blocks bookings automatically.
+
+---
+
+## Things to double-check after import
+
+These parts were written by hand and could not be test-run outside your Make account:
+
+- **Module 12 (Array aggregator)** – lets the flow continue when the calendar search finds nothing,
+  and lets a customer move their appointment by an hour without clashing with *themselves*.
+  The "Slot is free" filter on module 14 uses `length(remove(map(12.array; "id"); …))`.
+- **Module 50 (Resume)** – should contain the fallback JSON in its `result` field.
+- **Calendar titles** – new events are called `PENDING - name - service`. When a *confirmed*
+  customer reschedules, the new event is called `CONFIRMED - …` only if your approval scenario
+  writes `confirmed` into `status`. If it uses another word, change it in module 14's title.
+- **The approval scenario** (the separate webhook that handles Approve/Reject) is not in this
+  blueprint. It should keep working because the field names didn't change.
+
+See [CHANGES.md](CHANGES.md) for the list of bugs fixed compared with the old version.

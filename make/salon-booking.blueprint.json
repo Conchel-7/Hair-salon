@@ -1,0 +1,987 @@
+{
+  "name": "Hair Salon - WhatsApp Booking (simplified)",
+  "flow": [
+    {
+      "id": 1,
+      "module": "whatsapp-business-cloud:watchEvents2",
+      "version": 1,
+      "parameters": {
+        "__IMTHOOK__": 2896387
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0,
+          "name": "WhatsApp message in"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "datastore:GetRecord",
+      "version": 1,
+      "parameters": {
+        "datastore": 166708
+      },
+      "mapper": {
+        "key": "{{trim(1.messages[].from)}}",
+        "returnWrapped": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "Get customer record"
+        }
+      },
+      "filter": {
+        "name": "Real customer message only",
+        "conditions": [
+          [
+            {
+              "a": "{{1.messages[].from}}",
+              "o": "exist"
+            },
+            {
+              "a": "{{1.statuses}}",
+              "o": "notexist"
+            },
+            {
+              "a": "{{1.messages[].type}}",
+              "o": "text:notequal",
+              "b": "reaction"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "module": "util:SetVariables",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "variables": [
+          {
+            "name": "salon_name",
+            "value": "Conchel's Hair Salon"
+          },
+          {
+            "name": "bot_name",
+            "value": "Maia"
+          },
+          {
+            "name": "services",
+            "value": "• Knotless braids – R650 (about 5 hours)\n• Box braids – R700 (about 5 hours)\n• Wig installation – R500 (about 2 hours)\n• Hair treatment – R350 (about 1 hour)"
+          },
+          {
+            "name": "opening_time",
+            "value": "08:00"
+          },
+          {
+            "name": "closing_time",
+            "value": "17:00"
+          },
+          {
+            "name": "closed_days",
+            "value": "Sunday"
+          },
+          {
+            "name": "days_ahead",
+            "value": "60"
+          },
+          {
+            "name": "notice_hours",
+            "value": "2"
+          },
+          {
+            "name": "extra_info",
+            "value": "None yet."
+          },
+          {
+            "name": "payment_details",
+            "value": "Bank: Demo Bank\nAccount name: Conchel's Hair Salon\nAccount number: 0000000000\nBranch code: 000000\nReference: your name"
+          },
+          {
+            "name": "owner_email",
+            "value": "owner@example.com"
+          },
+          {
+            "name": "approval_link",
+            "value": "https://hook.YOUR-ZONE.make.com/YOUR_APPROVAL_WEBHOOK"
+          },
+          {
+            "name": "approval_token",
+            "value": "CHANGE_ME"
+          },
+          {
+            "name": "customer_state",
+            "value": "{{if(2.status = \"draft\"; \"draft\"; if(ifempty(2.`add calender_event-id`; \"none\") != \"none\" & ifempty(2.date; \"2000-01-01\") >= formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); \"booking\"; \"new\"))}}"
+          },
+          {
+            "name": "saved_service",
+            "value": "{{if(2.status = \"draft\" | ifempty(2.date; \"2000-01-01\") >= formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); 2.service; emptystring)}}"
+          },
+          {
+            "name": "saved_date",
+            "value": "{{if(2.status = \"draft\" | ifempty(2.date; \"2000-01-01\") >= formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); 2.date; emptystring)}}"
+          },
+          {
+            "name": "saved_time",
+            "value": "{{if(2.status = \"draft\" | ifempty(2.date; \"2000-01-01\") >= formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); 2.time; emptystring)}}"
+          },
+          {
+            "name": "booking_summary",
+            "value": "*{{2.service}}* on *{{formatDate(parseDate(ifempty(2.date; \"2000-01-01\"); \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}}* at *{{2.time}}*"
+          }
+        ],
+        "scope": "roundtrip"
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0,
+          "name": "SALON SETTINGS (edit here)"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "parameters": {
+        "else": 2
+      },
+      "mapper": null,
+      "metadata": {
+        "designer": {
+          "x": 900,
+          "y": 0,
+          "name": "Text, payment or other?"
+        }
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 5,
+              "module": "anthropic-claude:simpleTextPrompt",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "model": "claude-haiku-5-5",
+                "max_tokens": "600",
+                "textPrompt": "You are {{3.bot_name}}, the friendly WhatsApp booking assistant for {{3.salon_name}}.\nReply with ONE valid JSON object only. No markdown, no code fences, no other text.\n\nSALON INFORMATION (the only facts you may use)\nServices and prices:\n{{3.services}}\nOpening hours: {{3.opening_time}} to {{3.closing_time}}. Closed on: {{3.closed_days}}.\nBookings can be made up to {{3.days_ahead}} days ahead, with at least {{3.notice_hours}} hours' notice.\nPayment: once a booking request is saved, the customer receives the bank details, pays, and sends a screenshot of the proof of payment in this chat. The salon checks the payment and then confirms the booking.\nExtra information: {{3.extra_info}}\nSalon email: {{3.owner_email}}\nIf you are asked something not covered above, say you don't have that information and give the salon's email. Never invent prices, services, durations, discounts, addresses or bank details.\n\nTODAY: {{formatDate(now; \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}} ({{formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\")}}), South African time.\n\nTHIS CUSTOMER\nSituation: {{switch(3.customer_state; \"booking\"; \"has an upcoming appointment: \" + 3.booking_summary + \". Payment status: \" + 2.status + \" (awaiting_payment = we are waiting for their proof of payment, payment_review = the salon is checking their payment, confirmed = paid and confirmed)\"; \"draft\"; \"is in the middle of making a booking\"; \"has no upcoming appointment\")}}\nDetails we already have: name: {{ifempty(2.name; \"-\")}} | service: {{ifempty(3.saved_service; \"-\")}} | date: {{ifempty(3.saved_date; \"-\")}} | time: {{ifempty(3.saved_time; \"-\")}}\nYour previous message to them: {{ifempty(2.reply; \"(none, this is a new conversation)\")}}\n\nCUSTOMER'S NEW MESSAGE\n{{1.messages[].text.body}}\n\nSTEP 1: choose ONE action\n- \"book\": wants to make an appointment, or is giving booking details (name, service, date or time).\n- \"reschedule\": wants to move or change their existing appointment, or is giving the new date/time you asked for.\n- \"cancel_request\": asks to cancel their appointment.\n- \"cancel_confirm\": your previous message asked them to reply YES to cancel, and they now clearly agree.\n- \"chat\": anything else (greetings, questions, thanks, saying NO / keep my appointment).\n\nSTEP 2: take details from the NEW message only (use null for anything it does not contain)\n- name: the customer's name.\n- service: exactly one of the service names listed above, spelled exactly as listed (for example \"knotless\" = \"Knotless braids\"). null if unclear or not offered.\n- date: YYYY-MM-DD. The day comes before the month (15/11 = 15 November). Understand words like \"tomorrow\", \"Saturday\" or \"next Friday\". If no year is given, use the next date that is not in the past.\n- time: HH:mm in 24-hour time (2pm = 14:00, half past nine in the morning = 09:30). If they only say \"morning\" or \"afternoon\", use null.\n\nSTEP 3: write \"reply\" (a WhatsApp message: short, warm, clear, English, *bold* for key details)\n- book: combine \"details we already have\" with the new ones. If anything is still missing (name, service, date or time), ask for ALL the missing items in one short question. If nothing is missing, reply exactly: One moment, I'm checking the calendar for you...\n- reschedule: if no new date or time was given, ask which date and time they would like instead. Otherwise reply exactly: One moment, I'm checking the calendar for you...\n- cancel_request or cancel_confirm: reply with an empty string \"\".\n- chat: answer helpfully using only the salon information. When someone without an appointment greets you, welcome them, list the services with prices and ask what they would like to book. If they say NO to cancelling, confirm that their appointment stays as it is.\nNever say that a booking is confirmed, a time is available, a payment was received, or an appointment was moved or cancelled. Other messages take care of that. Never mention JSON, statuses or \"the system\".\n\nOUTPUT FORMAT (exactly these keys)\n{\"action\": \"book\", \"name\": null, \"service\": null, \"date\": null, \"time\": null, \"reply\": \"...\"}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 0,
+                  "name": "AI: understand the message"
+                }
+              },
+              "filter": {
+                "name": "Text message",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{1.messages[].type}}",
+                      "o": "text:equal",
+                      "b": "text"
+                    }
+                  ]
+                ]
+              },
+              "onerror": [
+                {
+                  "id": 50,
+                  "module": "builtin:Resume",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {
+                    "result": "{\"action\": \"chat\", \"name\": null, \"service\": null, \"date\": null, \"time\": null, \"reply\": \"Sorry, I'm having a small technical problem. Please send your message again in a minute. 🙏\"}"
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 1200,
+                      "y": 250,
+                      "name": "If AI fails: polite retry message"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": 6,
+              "module": "json:ParseJSON",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "json": "{{trim(replace(replace(5.result; \"```json\"; emptystring); \"```\"; emptystring))}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1500,
+                  "y": 0,
+                  "name": "Read AI answer"
+                }
+              },
+              "onerror": [
+                {
+                  "id": 51,
+                  "module": "whatsapp-business-cloud:sendMessage",
+                  "version": 1,
+                  "parameters": {
+                    "__IMTCONN__": 11507779
+                  },
+                  "mapper": {
+                    "to": "{{1.messages[].from}}",
+                    "type": "text",
+                    "fromId": "1297676863436086",
+                    "text": {
+                      "body": "Sorry, I didn't quite catch that. Could you please send your message again? 🙏",
+                      "preview_url": false
+                    }
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 1500,
+                      "y": 250,
+                      "name": "If AI answer is unreadable"
+                    }
+                  }
+                },
+                {
+                  "id": 52,
+                  "module": "builtin:Ignore",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {},
+                  "metadata": {
+                    "designer": {
+                      "x": 1800,
+                      "y": 250
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "module": "util:SetVariables",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "variables": [
+                  {
+                    "name": "name",
+                    "value": "{{ifempty(6.name; 2.name)}}"
+                  },
+                  {
+                    "name": "service",
+                    "value": "{{if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service))}}"
+                  },
+                  {
+                    "name": "date",
+                    "value": "{{ifempty(6.date; 3.saved_date)}}"
+                  },
+                  {
+                    "name": "time",
+                    "value": "{{ifempty(6.time; 3.saved_time)}}"
+                  },
+                  {
+                    "name": "price",
+                    "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Knotless braids\"; 650; \"Box braids\"; 700; \"Wig installation\"; 500; \"Hair treatment\"; 350; emptystring)}}"
+                  },
+                  {
+                    "name": "hours",
+                    "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Knotless braids\"; 5; \"Box braids\"; 5; \"Wig installation\"; 2; \"Hair treatment\"; 1; emptystring)}}"
+                  },
+                  {
+                    "name": "start",
+                    "value": "{{parseDate(ifempty(ifempty(6.date; 3.saved_date); \"2000-01-01\") + \" \" + ifempty(ifempty(6.time; 3.saved_time); \"00:00\"); \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\")}}"
+                  }
+                ],
+                "scope": "roundtrip"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1800,
+                  "y": 0,
+                  "name": "Booking details"
+                }
+              }
+            },
+            {
+              "id": 8,
+              "module": "util:SetVariables",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "variables": [
+                  {
+                    "name": "wants_slot",
+                    "value": "{{if(ifempty(7.name; \"-\") = \"-\" | ifempty(7.price; \"-\") = \"-\" | ifempty(7.date; \"-\") = \"-\" | ifempty(7.time; \"-\") = \"-\"; \"no\"; if(6.action = \"book\" & 3.customer_state != \"booking\"; \"yes\"; if(6.action = \"reschedule\" & 3.customer_state = \"booking\" & ifempty(6.date; ifempty(6.time; \"-\")) != \"-\"; \"yes\"; \"no\")))}}"
+                  },
+                  {
+                    "name": "system_reply",
+                    "value": "{{if(3.customer_state = \"booking\"; if(6.action = \"book\"; \"You already have an appointment: \" + 3.booking_summary + \".\n\nI can only hold one appointment per phone number. Reply *change* to move it, or *cancel* to cancel it.\"; if(6.action = \"cancel_request\"; \"Are you sure you want to cancel your appointment: \" + 3.booking_summary + \"?\n\nReply YES to cancel, or NO to keep it.\"; if(6.action = \"cancel_confirm\"; if(contains(lower(2.reply); \"yes to cancel\"); emptystring; \"Are you sure you want to cancel your appointment: \" + 3.booking_summary + \"?\n\nReply YES to cancel, or NO to keep it.\"); emptystring))); if(6.action = \"reschedule\" | 6.action = \"cancel_request\" | 6.action = \"cancel_confirm\"; \"I couldn't find an upcoming appointment for this number. 🙂\n\nWould you like to make a booking? Just tell me the service, date and time you'd like.\"; emptystring))}}"
+                  },
+                  {
+                    "name": "slot_problem",
+                    "value": "{{if(contains(3.closed_days; formatDate(7.start; \"dddd\"; \"Africa/Johannesburg\")); \"Sorry, we're closed on \" + formatDate(7.start; \"dddd\"; \"Africa/Johannesburg\") + \"s. We're open \" + 3.opening_time + \" to \" + 3.closing_time + \". Please choose another day.\"; if(7.start < addHours(now; 3.notice_hours); \"That time has already passed or is too soon. Please choose a time at least \" + 3.notice_hours + \" hours from now.\"; if(7.start > addDays(now; 3.days_ahead); \"We can only take bookings up to \" + 3.days_ahead + \" days ahead. Please choose an earlier date.\"; if(formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\") < 3.opening_time; \"We open at \" + 3.opening_time + \". Please choose a later time.\"; if(formatDate(addHours(7.start; 7.hours); \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\") > formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.closing_time; 7.service + \" takes about \" + 7.hours + \" hours and we close at \" + 3.closing_time + \", so the latest start time is *\" + formatDate(addHours(parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.closing_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); 7.hours * -1); \"HH:mm\"; \"Africa/Johannesburg\") + \"*. Please choose an earlier time.\"; emptystring)))))}}"
+                  }
+                ],
+                "scope": "roundtrip"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 2100,
+                  "y": 0,
+                  "name": "Booking check"
+                }
+              }
+            },
+            {
+              "id": 9,
+              "module": "datastore:AddRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": 166708
+              },
+              "mapper": {
+                "key": "{{trim(1.messages[].from)}}",
+                "overwrite": true,
+                "data": {
+                  "name": "{{7.name}}",
+                  "service": "{{7.service}}",
+                  "date": "{{if(3.customer_state = \"booking\"; 2.date; 7.date)}}",
+                  "time": "{{if(3.customer_state = \"booking\"; 2.time; 7.time)}}",
+                  "price": "{{if(3.customer_state = \"booking\"; 2.price; 7.price)}}",
+                  "phone": "{{trim(1.messages[].from)}}",
+                  "status": "{{if(3.customer_state = \"booking\"; 2.status; \"draft\")}}",
+                  "payment status": "{{if(3.customer_state = \"booking\"; 2.`payment status`; emptystring)}}",
+                  "add calender_event-id": "{{if(3.customer_state = \"booking\"; 2.`add calender_event-id`; emptystring)}}",
+                  "reply": "{{ifempty(8.system_reply; if(8.wants_slot = \"yes\"; ifempty(8.slot_problem; 6.reply); 6.reply))}}"
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 2400,
+                  "y": 0,
+                  "name": "Save conversation"
+                }
+              }
+            },
+            {
+              "id": 10,
+              "module": "builtin:BasicRouter",
+              "version": 1,
+              "parameters": {
+                "else": 2
+              },
+              "mapper": null,
+              "metadata": {
+                "designer": {
+                  "x": 2700,
+                  "y": 0,
+                  "name": "What needs to happen?"
+                }
+              },
+              "routes": [
+                {
+                  "flow": [
+                    {
+                      "id": 11,
+                      "module": "google-calendar:searchEvents",
+                      "version": 5,
+                      "parameters": {
+                        "__IMTCONN__": 11354421
+                      },
+                      "mapper": {
+                        "limit": 10,
+                        "timeMin": "{{7.start}}",
+                        "timeMax": "{{addHours(7.start; 7.hours)}}",
+                        "calendar": "YOUR_GOOGLE_CALENDAR_ID",
+                        "singleEvents": true
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3000,
+                          "y": 0,
+                          "name": "Find clashing events"
+                        }
+                      },
+                      "filter": {
+                        "name": "Ready to check the calendar",
+                        "conditions": [
+                          [
+                            {
+                              "a": "{{8.wants_slot}}",
+                              "o": "text:equal",
+                              "b": "yes"
+                            },
+                            {
+                              "a": "{{8.system_reply}}",
+                              "o": "notexist"
+                            },
+                            {
+                              "a": "{{8.slot_problem}}",
+                              "o": "notexist"
+                            }
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "id": 12,
+                      "module": "builtin:BasicAggregator",
+                      "version": 1,
+                      "parameters": {
+                        "feeder": 11
+                      },
+                      "mapper": {
+                        "id": "{{11.id}}"
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3300,
+                          "y": 0,
+                          "name": "Collect clashing events"
+                        }
+                      }
+                    },
+                    {
+                      "id": 13,
+                      "module": "builtin:BasicRouter",
+                      "version": 1,
+                      "parameters": {
+                        "else": 1
+                      },
+                      "mapper": null,
+                      "metadata": {
+                        "designer": {
+                          "x": 3600,
+                          "y": 0,
+                          "name": "Free or taken?"
+                        }
+                      },
+                      "routes": [
+                        {
+                          "flow": [
+                            {
+                              "id": 14,
+                              "module": "google-calendar:createAnEvent",
+                              "version": 5,
+                              "parameters": {
+                                "__IMTCONN__": 11354421
+                              },
+                              "mapper": {
+                                "start": "{{7.start}}",
+                                "end": "{{addHours(7.start; 7.hours)}}",
+                                "select": "detail",
+                                "summary": "{{if(3.customer_state = \"booking\" & 2.status = \"confirmed\"; \"CONFIRMED\"; \"PENDING\")}} - {{7.name}} - {{7.service}}",
+                                "description": "WhatsApp: +{{1.messages[].from}}\nPrice: R{{7.price}}",
+                                "calendar": "YOUR_GOOGLE_CALENDAR_ID",
+                                "visibility": "default",
+                                "allDayEvent": false,
+                                "transparency": "opaque",
+                                "conferenceDate": false
+                              },
+                              "metadata": {
+                                "designer": {
+                                  "x": 3900,
+                                  "y": 0,
+                                  "name": "Create calendar event"
+                                }
+                              },
+                              "filter": {
+                                "name": "Slot is free",
+                                "conditions": [
+                                  [
+                                    {
+                                      "a": "{{length(remove(map(12.array; \"id\"); 2.`add calender_event-id`))}}",
+                                      "o": "number:equal",
+                                      "b": "0"
+                                    }
+                                  ]
+                                ]
+                              }
+                            },
+                            {
+                              "id": 15,
+                              "module": "datastore:UpdateRecord",
+                              "version": 1,
+                              "parameters": {
+                                "datastore": 166708
+                              },
+                              "mapper": {
+                                "key": "{{trim(1.messages[].from)}}",
+                                "upsert": true,
+                                "overwriteArrays": false,
+                                "data": {
+                                  "name": "{{7.name}}",
+                                  "service": "{{7.service}}",
+                                  "price": "{{7.price}}",
+                                  "date": "{{formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\")}}",
+                                  "time": "{{formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\")}}",
+                                  "status": "{{if(3.customer_state = \"booking\"; 2.status; \"awaiting_payment\")}}",
+                                  "add calender_event-id": "{{14.id}}",
+                                  "reply": "Appointment saved."
+                                }
+                              },
+                              "metadata": {
+                                "designer": {
+                                  "x": 4200,
+                                  "y": 0,
+                                  "name": "Save booking"
+                                }
+                              }
+                            },
+                            {
+                              "id": 16,
+                              "module": "whatsapp-business-cloud:sendMessage",
+                              "version": 1,
+                              "parameters": {
+                                "__IMTCONN__": 11507779
+                              },
+                              "mapper": {
+                                "to": "{{1.messages[].from}}",
+                                "type": "text",
+                                "fromId": "1297676863436086",
+                                "text": {
+                                  "body": "{{if(3.customer_state = \"booking\"; \"✅ *Your appointment has been moved*\"; \"📝 *Booking request received*\")}}\n\n• *Service:* {{7.service}}\n• *Date:* {{formatDate(7.start; \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}}\n• *Time:* {{formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\")}} – {{formatDate(addHours(7.start; 7.hours); \"HH:mm\"; \"Africa/Johannesburg\")}}\n• *Price:* R{{7.price}}\n\n{{if(3.customer_state = \"booking\"; \"Nothing else has changed. See you then! 💇🏾‍♀️\"; \"To secure your slot, please pay using these details:\n\n\" + 3.payment_details + \"\n\nThen send a screenshot of your proof of payment here. Your booking is confirmed once the salon has checked your payment.\")}}",
+                                  "preview_url": false
+                                }
+                              },
+                              "metadata": {
+                                "designer": {
+                                  "x": 4500,
+                                  "y": 0,
+                                  "name": "Send booking details"
+                                }
+                              }
+                            },
+                            {
+                              "id": 17,
+                              "module": "google-calendar:deleteAnEvent",
+                              "version": 5,
+                              "parameters": {
+                                "__IMTCONN__": 11354421
+                              },
+                              "mapper": {
+                                "event": "{{2.`add calender_event-id`}}",
+                                "calendar": "YOUR_GOOGLE_CALENDAR_ID"
+                              },
+                              "metadata": {
+                                "designer": {
+                                  "x": 4800,
+                                  "y": 0,
+                                  "name": "Remove old event (reschedule)"
+                                }
+                              },
+                              "filter": {
+                                "name": "Only when rescheduling",
+                                "conditions": [
+                                  [
+                                    {
+                                      "a": "{{3.customer_state}}",
+                                      "o": "text:equal",
+                                      "b": "booking"
+                                    }
+                                  ]
+                                ]
+                              },
+                              "onerror": [
+                                {
+                                  "id": 53,
+                                  "module": "builtin:Ignore",
+                                  "version": 1,
+                                  "parameters": {},
+                                  "mapper": {},
+                                  "metadata": {
+                                    "designer": {
+                                      "x": 4800,
+                                      "y": 250
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "flow": [
+                            {
+                              "id": 18,
+                              "module": "whatsapp-business-cloud:sendMessage",
+                              "version": 1,
+                              "parameters": {
+                                "__IMTCONN__": 11507779
+                              },
+                              "mapper": {
+                                "to": "{{1.messages[].from}}",
+                                "type": "text",
+                                "fromId": "1297676863436086",
+                                "text": {
+                                  "body": "Sorry, that time is already taken: *{{7.service}}* on *{{formatDate(7.start; \"dddd D MMMM\"; \"Africa/Johannesburg\")}}* at *{{formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\")}}*. 😔\n\n{{if(3.customer_state = \"booking\"; \"Your current appointment has not changed. \"; emptystring)}}Please send me another date or time and I'll check it for you.",
+                                  "preview_url": false
+                                }
+                              },
+                              "metadata": {
+                                "designer": {
+                                  "x": 3900,
+                                  "y": 400,
+                                  "name": "Send: slot taken"
+                                }
+                              },
+                              "filter": {
+                                "name": "Slot is taken",
+                                "conditions": null
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "flow": [
+                    {
+                      "id": 19,
+                      "module": "google-calendar:deleteAnEvent",
+                      "version": 5,
+                      "parameters": {
+                        "__IMTCONN__": 11354421
+                      },
+                      "mapper": {
+                        "event": "{{2.`add calender_event-id`}}",
+                        "calendar": "YOUR_GOOGLE_CALENDAR_ID"
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3000,
+                          "y": 1200,
+                          "name": "Delete calendar event"
+                        }
+                      },
+                      "filter": {
+                        "name": "Customer confirmed cancellation",
+                        "conditions": [
+                          [
+                            {
+                              "a": "{{6.action}}",
+                              "o": "text:equal",
+                              "b": "cancel_confirm"
+                            },
+                            {
+                              "a": "{{3.customer_state}}",
+                              "o": "text:equal",
+                              "b": "booking"
+                            },
+                            {
+                              "a": "{{2.reply}}",
+                              "o": "text:contain:ci",
+                              "b": "YES to cancel"
+                            }
+                          ]
+                        ]
+                      },
+                      "onerror": [
+                        {
+                          "id": 54,
+                          "module": "builtin:Resume",
+                          "version": 1,
+                          "parameters": {},
+                          "mapper": {},
+                          "metadata": {
+                            "designer": {
+                              "x": 3000,
+                              "y": 1450
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": 20,
+                      "module": "datastore:DeleteRecord",
+                      "version": 1,
+                      "parameters": {
+                        "datastore": 166708
+                      },
+                      "mapper": {
+                        "key": "{{trim(1.messages[].from)}}"
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3300,
+                          "y": 1200,
+                          "name": "Delete customer record"
+                        }
+                      }
+                    },
+                    {
+                      "id": 21,
+                      "module": "whatsapp-business-cloud:sendMessage",
+                      "version": 1,
+                      "parameters": {
+                        "__IMTCONN__": 11507779
+                      },
+                      "mapper": {
+                        "to": "{{1.messages[].from}}",
+                        "type": "text",
+                        "fromId": "1297676863436086",
+                        "text": {
+                          "body": "✅ Your appointment ({{3.booking_summary}}) has been cancelled.\n\nIf you already paid, please email {{3.owner_email}} about your payment.\nWhenever you'd like to book again, just send me a message. 🙂",
+                          "preview_url": false
+                        }
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3600,
+                          "y": 1200,
+                          "name": "Send: cancelled"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "flow": [
+                    {
+                      "id": 22,
+                      "module": "whatsapp-business-cloud:sendMessage",
+                      "version": 1,
+                      "parameters": {
+                        "__IMTCONN__": 11507779
+                      },
+                      "mapper": {
+                        "to": "{{1.messages[].from}}",
+                        "type": "text",
+                        "fromId": "1297676863436086",
+                        "text": {
+                          "body": "{{ifempty(8.system_reply; if(8.wants_slot = \"yes\"; ifempty(8.slot_problem; 6.reply); 6.reply))}}",
+                          "preview_url": false
+                        }
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3000,
+                          "y": 1600,
+                          "name": "Send reply"
+                        }
+                      },
+                      "filter": {
+                        "name": "Everything else",
+                        "conditions": null
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 23,
+              "module": "whatsapp-business-cloud:getMedia",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": 11507779
+              },
+              "mapper": {
+                "mediaId": "{{ifempty(1.messages[].image.id; 1.messages[].document.id)}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 2400,
+                  "name": "Download proof of payment"
+                }
+              },
+              "filter": {
+                "name": "Proof of payment for a booking",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{1.messages[].type}}",
+                      "o": "text:equal",
+                      "b": "image"
+                    },
+                    {
+                      "a": "{{2.status}}",
+                      "o": "text:equal",
+                      "b": "awaiting_payment"
+                    },
+                    {
+                      "a": "{{3.customer_state}}",
+                      "o": "text:equal",
+                      "b": "booking"
+                    }
+                  ],
+                  [
+                    {
+                      "a": "{{1.messages[].type}}",
+                      "o": "text:equal",
+                      "b": "document"
+                    },
+                    {
+                      "a": "{{2.status}}",
+                      "o": "text:equal",
+                      "b": "awaiting_payment"
+                    },
+                    {
+                      "a": "{{3.customer_state}}",
+                      "o": "text:equal",
+                      "b": "booking"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 24,
+              "module": "google-email:sendAnEmail",
+              "version": 4,
+              "parameters": {
+                "__IMTCONN__": 11336146
+              },
+              "mapper": {
+                "to": [
+                  "{{3.owner_email}}"
+                ],
+                "subject": "Proof of payment: {{2.name}} – {{2.service}} on {{2.date}} at {{2.time}}",
+                "bodyType": "collection",
+                "contents": [
+                  {
+                    "text": "New proof of payment received (attached).\n\nCustomer: {{2.name}}\nWhatsApp: +{{trim(1.messages[].from)}}\nService: {{2.service}}\nDate: {{2.date}}\nTime: {{2.time}}\nPrice: R{{2.price}}\n\nCheck your bank account, then tap one of these links:\n\nAPPROVE: {{3.approval_link}}?key={{trim(1.messages[].from)}}&token={{3.approval_token}}&action=approve\n\nREJECT: {{3.approval_link}}?key={{trim(1.messages[].from)}}&token={{3.approval_token}}&action=reject\n",
+                    "image": {}
+                  }
+                ],
+                "attachments": [
+                  {
+                    "data": "{{23.mediaData}}",
+                    "filename": "{{if(1.messages[].type = \"document\"; ifempty(1.messages[].document.filename; \"payment.pdf\"); \"payment-\" + trim(1.messages[].from) + \".jpg\")}}"
+                  }
+                ]
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1500,
+                  "y": 2400,
+                  "name": "Email owner to check payment"
+                }
+              }
+            },
+            {
+              "id": 25,
+              "module": "datastore:UpdateRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": 166708
+              },
+              "mapper": {
+                "key": "{{trim(1.messages[].from)}}",
+                "upsert": true,
+                "overwriteArrays": false,
+                "data": {
+                  "status": "payment_review",
+                  "reply": "Proof of payment received."
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1800,
+                  "y": 2400,
+                  "name": "Mark payment in review"
+                }
+              }
+            },
+            {
+              "id": 26,
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": 11507779
+              },
+              "mapper": {
+                "to": "{{1.messages[].from}}",
+                "type": "text",
+                "fromId": "1297676863436086",
+                "text": {
+                  "body": "🙏 Thank you! I've received your proof of payment and sent it to the salon.\n\nYour appointment ({{3.booking_summary}}) will be confirmed as soon as the payment has been checked. You'll get a message here when it's done.",
+                  "preview_url": false
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 2100,
+                  "y": 2400,
+                  "name": "Send: payment received"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 27,
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": 11507779
+              },
+              "mapper": {
+                "to": "{{1.messages[].from}}",
+                "type": "text",
+                "fromId": "1297676863436086",
+                "text": {
+                  "body": "{{if(1.messages[].type = \"image\" | 1.messages[].type = \"document\"; if(2.status = \"payment_review\"; \"Thanks! I already have your proof of payment and the salon is checking it. You'll get a message here once it's confirmed.\"; if(3.customer_state = \"booking\"; \"Thanks! There is no payment waiting for your appointment right now. If you have a question, just type it here. 🙂\"; \"Thanks for the picture! I can only accept proof of payment after you've made a booking. To book, just tell me the service, date and time you'd like. 🙂\")); \"Sorry, I can only read typed messages (not voice notes, stickers or videos). Please type your message and I'll help. 🙂\")}}",
+                  "preview_url": false
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 2800,
+                  "name": "Send: can't read this"
+                }
+              },
+              "filter": {
+                "name": "Anything else",
+                "conditions": null
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": true,
+      "slots": null,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": true,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "us2.make.com",
+    "notes": []
+  }
+}
