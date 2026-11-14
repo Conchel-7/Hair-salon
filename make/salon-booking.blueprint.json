@@ -442,7 +442,7 @@
                       "id": 13,
                       "module": "builtin:BasicRouter",
                       "version": 1,
-                      "parameters": null,
+                      "parameters": {},
                       "mapper": null,
                       "metadata": {
                         "designer": {
