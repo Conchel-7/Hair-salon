@@ -30,7 +30,7 @@ in the Data Store.
 | # | Do | Expected |
 |---|---|---|
 | 11 | In Google Calendar, add 3 events next Wednesday 10:00–12:00. Then book `Make-up, next Wednesday, 10:00` | Booked (4th stylist free) |
-| 12 | From a second phone (or after cancelling), book the same time again | "all our stylists are booked" |
+| 12 | Cancel that booking (`cancel`, `yes`), add a 4th event next Wednesday 10:00–12:00 in Google Calendar, then book `Make-up, next Wednesday, 10:00` again | "all our stylists are booked" |
 
 ## Payment and approval
 
