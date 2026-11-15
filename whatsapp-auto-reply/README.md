@@ -39,6 +39,27 @@ Message:    I want to automate replies to my customers' questions
 
 ---
 
+## Quick setup: import the ready-made scenario
+
+The file `whatsapp-assistant.blueprint.json` contains the whole scenario (16 modules).
+The copy in this repo has `YOUR_EMAIL@example.com` as the recipient, so change it in module 16 after importing.
+
+1. **Create the data store first** ([Step 1](#step-1-create-the-data-store-the-bots-memory) below).
+2. In Make: **Create a new scenario → ⋯ → Import Blueprint** → choose the file.
+3. **Module 1 (New WhatsApp message):** pick your existing webhook, or create one with your WhatsApp connection.
+4. **Run once**, then send a WhatsApp message to your business number from another phone.
+5. **Module 2 (Message details):** this is the only place that reads the WhatsApp data. Check its 3 values against what module 1 received (click the bubble on module 1 to see the data):
+   - `from` = sender's number, `{{1.messages[1].from}}`
+   - `text` = message text, `{{1.messages[1].text.body}}`
+   - `senderId` = your Phone number ID, `{{1.metadata.phone_number_id}}`. You can also paste the ID straight in from Meta → WhatsApp Manager → API setup.
+   If the data is laid out differently, re-map these 3 here and do the same for the filter just before module 2 (message type = `text`). Every other module reads from module 2, so nothing else needs to change.
+6. **Modules 3, 6, 8, 10, 12, 15 (data store):** select the `WhatsApp Leads` data store.
+7. **Modules 5, 7, 9, 11, 13, 14 (Send a Message):** select your WhatsApp connection. Open one of them and check that the message text is filled in.
+8. **Module 16 (Email me the lead):** select your Gmail connection and check the **To** address.
+9. **Save**, check that **Sequential processing** is ON in scenario settings, and switch the scenario **ON**.
+
+The step-by-step build below explains what each part does, and you can follow it if you prefer to build the scenario by hand.
+
 ## What you need before you start
 
 - A **Make.com** account (the free plan works to test it).

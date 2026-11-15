@@ -1,0 +1,546 @@
+{
+  "name": "Conchel AI Automation - WhatsApp busy assistant",
+  "flow": [
+    {
+      "id": 1,
+      "module": "whatsapp-business-cloud:watchEvents2",
+      "version": 1,
+      "parameters": {
+        "__IMTHOOK__": null
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0,
+          "name": "New WhatsApp message"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "util:SetVariables",
+      "version": 1,
+      "parameters": {},
+      "filter": {
+        "name": "Only incoming text messages",
+        "conditions": [
+          [
+            {
+              "a": "{{1.messages[1].type}}",
+              "o": "text:equal",
+              "b": "text"
+            }
+          ]
+        ]
+      },
+      "mapper": {
+        "scope": "roundtrip",
+        "variables": [
+          {
+            "name": "from",
+            "value": "{{1.messages[1].from}}"
+          },
+          {
+            "name": "text",
+            "value": "{{trim(1.messages[1].text.body)}}"
+          },
+          {
+            "name": "senderId",
+            "value": "{{1.metadata.phone_number_id}}"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "Message details (check these paths)"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "datastore:GetRecord",
+      "version": 1,
+      "parameters": {
+        "datastore": null
+      },
+      "mapper": {
+        "key": "{{2.from}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0,
+          "name": "Where is this person in the chat?"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "mapper": null,
+      "metadata": {
+        "designer": {
+          "x": 750,
+          "y": 0,
+          "name": "Router"
+        }
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 5,
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": null
+              },
+              "mapper": {
+                "fromId": "{{2.senderId}}",
+                "to": "{{2.from}}",
+                "type": "text",
+                "body": "Hi 👋 Thanks for contacting Conchel AI Automation! I'm busy right now, but I'll get back to you as soon as I can. While you wait, what's your first name?",
+                "text": {
+                  "body": "Hi 👋 Thanks for contacting Conchel AI Automation! I'm busy right now, but I'll get back to you as soon as I can. While you wait, what's your first name?"
+                },
+                "previewUrl": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": -600,
+                  "name": "Welcome + ask first name"
+                }
+              },
+              "filter": {
+                "name": "New conversation",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{3.step}}",
+                      "o": "notexist"
+                    }
+                  ],
+                  [
+                    {
+                      "a": "{{3.step}}",
+                      "o": "text:equal",
+                      "b": "done"
+                    },
+                    {
+                      "a": "{{3.updatedAt}}",
+                      "o": "date:less",
+                      "b": "{{addDays(now; -7)}}"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 6,
+              "module": "datastore:AddRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": null
+              },
+              "mapper": {
+                "key": "{{2.from}}",
+                "overwrite": true,
+                "data": {
+                  "step": "firstName",
+                  "firstName": "",
+                  "surname": "",
+                  "email": "",
+                  "inquiry": "",
+                  "updatedAt": "{{now}}"
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": -600,
+                  "name": "Save progress (step = firstName)"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 7,
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": null
+              },
+              "mapper": {
+                "fromId": "{{2.senderId}}",
+                "to": "{{2.from}}",
+                "type": "text",
+                "body": "Nice to meet you, {{2.text}}! What's your surname?",
+                "text": {
+                  "body": "Nice to meet you, {{2.text}}! What's your surname?"
+                },
+                "previewUrl": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": -360,
+                  "name": "Ask surname"
+                }
+              },
+              "filter": {
+                "name": "Got first name",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{3.step}}",
+                      "o": "text:equal",
+                      "b": "firstName"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 8,
+              "module": "datastore:AddRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": null
+              },
+              "mapper": {
+                "key": "{{2.from}}",
+                "overwrite": true,
+                "data": {
+                  "step": "surname",
+                  "firstName": "{{2.text}}",
+                  "surname": "",
+                  "email": "",
+                  "inquiry": "",
+                  "updatedAt": "{{now}}"
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": -360,
+                  "name": "Save progress (step = surname)"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 9,
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": null
+              },
+              "mapper": {
+                "fromId": "{{2.senderId}}",
+                "to": "{{2.from}}",
+                "type": "text",
+                "body": "Thanks! What's your email address?",
+                "text": {
+                  "body": "Thanks! What's your email address?"
+                },
+                "previewUrl": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": -120,
+                  "name": "Ask email"
+                }
+              },
+              "filter": {
+                "name": "Got surname",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{3.step}}",
+                      "o": "text:equal",
+                      "b": "surname"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 10,
+              "module": "datastore:AddRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": null
+              },
+              "mapper": {
+                "key": "{{2.from}}",
+                "overwrite": true,
+                "data": {
+                  "step": "email",
+                  "firstName": "{{3.firstName}}",
+                  "surname": "{{2.text}}",
+                  "email": "",
+                  "inquiry": "",
+                  "updatedAt": "{{now}}"
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": -120,
+                  "name": "Save progress (step = email)"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 11,
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": null
+              },
+              "mapper": {
+                "fromId": "{{2.senderId}}",
+                "to": "{{2.from}}",
+                "type": "text",
+                "body": "Great. Briefly, what would you like help with? (e.g. automating bookings, a WhatsApp bot, lead follow-ups, AI customer support)",
+                "text": {
+                  "body": "Great. Briefly, what would you like help with? (e.g. automating bookings, a WhatsApp bot, lead follow-ups, AI customer support)"
+                },
+                "previewUrl": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 120,
+                  "name": "Ask what they need"
+                }
+              },
+              "filter": {
+                "name": "Got valid email",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{3.step}}",
+                      "o": "text:equal",
+                      "b": "email"
+                    },
+                    {
+                      "a": "{{2.text}}",
+                      "o": "text:contain",
+                      "b": "@"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 12,
+              "module": "datastore:AddRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": null
+              },
+              "mapper": {
+                "key": "{{2.from}}",
+                "overwrite": true,
+                "data": {
+                  "step": "inquiry",
+                  "firstName": "{{3.firstName}}",
+                  "surname": "{{3.surname}}",
+                  "email": "{{lower(2.text)}}",
+                  "inquiry": "",
+                  "updatedAt": "{{now}}"
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 120,
+                  "name": "Save progress (step = inquiry)"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 13,
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": null
+              },
+              "mapper": {
+                "fromId": "{{2.senderId}}",
+                "to": "{{2.from}}",
+                "type": "text",
+                "body": "Hmm, that doesn't look like an email address. Please type it again (e.g. name@example.com).",
+                "text": {
+                  "body": "Hmm, that doesn't look like an email address. Please type it again (e.g. name@example.com)."
+                },
+                "previewUrl": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 360,
+                  "name": "Ask email again"
+                }
+              },
+              "filter": {
+                "name": "Invalid email",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{3.step}}",
+                      "o": "text:equal",
+                      "b": "email"
+                    },
+                    {
+                      "a": "{{2.text}}",
+                      "o": "text:notcontain",
+                      "b": "@"
+                    }
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 14,
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": null
+              },
+              "mapper": {
+                "fromId": "{{2.senderId}}",
+                "to": "{{2.from}}",
+                "type": "text",
+                "body": "Thank you, {{3.firstName}}! 🙏 I've got all your details and will be in touch soon.",
+                "text": {
+                  "body": "Thank you, {{3.firstName}}! 🙏 I've got all your details and will be in touch soon."
+                },
+                "previewUrl": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 600,
+                  "name": "Thank the client"
+                }
+              },
+              "filter": {
+                "name": "Got inquiry",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{3.step}}",
+                      "o": "text:equal",
+                      "b": "inquiry"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 15,
+              "module": "datastore:AddRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": null
+              },
+              "mapper": {
+                "key": "{{2.from}}",
+                "overwrite": true,
+                "data": {
+                  "step": "done",
+                  "firstName": "{{3.firstName}}",
+                  "surname": "{{3.surname}}",
+                  "email": "{{3.email}}",
+                  "inquiry": "{{2.text}}",
+                  "updatedAt": "{{now}}"
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 600,
+                  "name": "Save progress (step = done)"
+                }
+              }
+            },
+            {
+              "id": 16,
+              "module": "email:ActionSendEme",
+              "version": 7,
+              "parameters": {
+                "account": null
+              },
+              "mapper": {
+                "from": "",
+                "to": [
+                  "YOUR_EMAIL@example.com"
+                ],
+                "subject": "New WhatsApp lead: {{3.firstName}} {{3.surname}}",
+                "contentType": "html",
+                "html": "<h2>New WhatsApp lead</h2><p><b>Name:</b> {{3.firstName}}<br><b>Surname:</b> {{3.surname}}<br><b>Cellphone:</b> +{{2.from}} (<a href=\"https://wa.me/{{2.from}}\">chat on WhatsApp</a>)<br><b>Email:</b> {{3.email}}<br><b>Message:</b> {{2.text}}</p><p style=\"color:#888;font-size:12px\">Sent automatically by your Conchel AI Automation WhatsApp assistant.</p>",
+                "attachments": [],
+                "cc": [],
+                "bcc": []
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1500,
+                  "y": 600,
+                  "name": "Email me the lead"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": true,
+      "slots": null,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "us2.make.com",
+    "notes": []
+  }
+}
