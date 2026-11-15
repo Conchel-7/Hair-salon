@@ -1,0 +1,429 @@
+{
+  "name": "Hair Salon - Payment approval",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0,
+          "name": "Approve / Reject link clicked"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "datastore:GetRecord",
+      "version": 1,
+      "parameters": {
+        "datastore": 166708
+      },
+      "mapper": {
+        "key": "{{trim(1.key)}}",
+        "returnWrapped": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "Get customer record"
+        }
+      },
+      "filter": {
+        "name": "Correct secret token",
+        "conditions": [
+          [
+            {
+              "a": "{{1.token}}",
+              "o": "text:equal",
+              "b": "CHANGE_ME"
+            },
+            {
+              "a": "{{1.key}}",
+              "o": "exist"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "parameters": {
+        "else": 2
+      },
+      "mapper": null,
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0,
+          "name": "Approve or reject?"
+        }
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 4,
+              "module": "google-calendar:updateAnEvent",
+              "version": 5,
+              "parameters": {
+                "__IMTCONN__": 11354421
+              },
+              "mapper": {
+                "event": "{{2.`add calender_event-id`}}",
+                "append": false,
+                "summary": "CONFIRMED - {{2.name}} - {{2.service}}",
+                "calendar": "YOUR_GOOGLE_CALENDAR_ID",
+                "allDayEvent": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 0,
+                  "name": "Calendar: CONFIRMED"
+                }
+              },
+              "filter": {
+                "name": "Approve",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{1.action}}",
+                      "o": "text:equal",
+                      "b": "approve"
+                    },
+                    {
+                      "a": "{{2.status}}",
+                      "o": "text:equal",
+                      "b": "payment_review"
+                    },
+                    {
+                      "a": "{{2.`add calender_event-id`}}",
+                      "o": "exist"
+                    }
+                  ],
+                  [
+                    {
+                      "a": "{{1.action}}",
+                      "o": "text:equal",
+                      "b": "approve"
+                    },
+                    {
+                      "a": "{{2.status}}",
+                      "o": "text:equal",
+                      "b": "awaiting_payment"
+                    },
+                    {
+                      "a": "{{2.`add calender_event-id`}}",
+                      "o": "exist"
+                    }
+                  ]
+                ]
+              },
+              "onerror": [
+                {
+                  "id": 40,
+                  "module": "builtin:Resume",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {},
+                  "metadata": {
+                    "designer": {
+                      "x": 900,
+                      "y": 250
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "module": "datastore:UpdateRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": 166708
+              },
+              "mapper": {
+                "key": "{{trim(1.key)}}",
+                "upsert": false,
+                "overwriteArrays": false,
+                "data": {
+                  "status": "confirmed",
+                  "payment status": "paid",
+                  "reply": "Your booking is confirmed."
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 0,
+                  "name": "Mark confirmed"
+                }
+              }
+            },
+            {
+              "id": 6,
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": 11507779
+              },
+              "mapper": {
+                "to": "{{1.key}}",
+                "type": "text",
+                "fromId": "1297676863436086",
+                "text": {
+                  "body": "✅ *Your booking is confirmed!*\n\n*{{2.service}}* on *{{formatDate(parseDate(2.date; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}}* at *{{2.time}}*\n\nThank you, we've received your payment. See you then! 💇🏾‍♀️\n\nNeed to change or cancel? Just message me here.",
+                  "preview_url": false
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1500,
+                  "y": 0,
+                  "name": "WhatsApp: confirmed"
+                }
+              },
+              "onerror": [
+                {
+                  "id": 41,
+                  "module": "gateway:WebhookRespond",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {
+                    "status": "200",
+                    "body": "APPROVED. {{2.name}}'s booking was updated, but the WhatsApp message could NOT be delivered (usually because the customer's last message was more than 24 hours ago). Please contact the customer yourself: +{{1.key}}",
+                    "headers": []
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 1500,
+                      "y": 250
+                    }
+                  }
+                },
+                {
+                  "id": 42,
+                  "module": "builtin:Ignore",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {},
+                  "metadata": {
+                    "designer": {
+                      "x": 1800,
+                      "y": 250
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "module": "gateway:WebhookRespond",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "status": "200",
+                "body": "APPROVED. {{2.name}}'s booking is confirmed, the calendar says CONFIRMED and the customer got a WhatsApp message.",
+                "headers": []
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1800,
+                  "y": 0,
+                  "name": "Show: approved"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 8,
+              "module": "datastore:UpdateRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": 166708
+              },
+              "mapper": {
+                "key": "{{trim(1.key)}}",
+                "upsert": false,
+                "overwriteArrays": false,
+                "data": {
+                  "status": "awaiting_payment",
+                  "reply": "Payment could not be verified."
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 400,
+                  "name": "Back to awaiting payment"
+                }
+              },
+              "filter": {
+                "name": "Reject",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{1.action}}",
+                      "o": "text:equal",
+                      "b": "reject"
+                    },
+                    {
+                      "a": "{{2.status}}",
+                      "o": "text:equal",
+                      "b": "payment_review"
+                    }
+                  ],
+                  [
+                    {
+                      "a": "{{1.action}}",
+                      "o": "text:equal",
+                      "b": "reject"
+                    },
+                    {
+                      "a": "{{2.status}}",
+                      "o": "text:equal",
+                      "b": "awaiting_payment"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 9,
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "parameters": {
+                "__IMTCONN__": 11507779
+              },
+              "mapper": {
+                "to": "{{1.key}}",
+                "type": "text",
+                "fromId": "1297676863436086",
+                "text": {
+                  "body": "We couldn't verify your payment for *{{2.service}}* on *{{formatDate(parseDate(2.date; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}}* at *{{2.time}}*. 😔\n\nYour time slot is still being held. Please check the payment and send your proof of payment here again.\nIf you think this is a mistake, please email owner@example.com.",
+                  "preview_url": false
+                }
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 400,
+                  "name": "WhatsApp: not verified"
+                }
+              },
+              "onerror": [
+                {
+                  "id": 43,
+                  "module": "gateway:WebhookRespond",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {
+                    "status": "200",
+                    "body": "REJECTED. {{2.name}}'s booking was updated, but the WhatsApp message could NOT be delivered (usually because the customer's last message was more than 24 hours ago). Please contact the customer yourself: +{{1.key}}",
+                    "headers": []
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 1200,
+                      "y": 650
+                    }
+                  }
+                },
+                {
+                  "id": 44,
+                  "module": "builtin:Ignore",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {},
+                  "metadata": {
+                    "designer": {
+                      "x": 1500,
+                      "y": 650
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": 10,
+              "module": "gateway:WebhookRespond",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "status": "200",
+                "body": "REJECTED. {{2.name}} was asked to check the payment and send proof again. The time slot is still held (PENDING).",
+                "headers": []
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1500,
+                  "y": 400,
+                  "name": "Show: rejected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 11,
+              "module": "gateway:WebhookRespond",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "status": "200",
+                "body": "Nothing changed. This booking was already handled, cancelled, or could not be found.",
+                "headers": []
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 800,
+                  "name": "Show: nothing to do"
+                }
+              },
+              "filter": {
+                "name": "Already handled / not found",
+                "conditions": null
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": true,
+      "slots": null,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": true,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "us2.make.com",
+    "notes": []
+  }
+}

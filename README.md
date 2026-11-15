@@ -116,8 +116,32 @@ blocks bookings automatically.
 - **Calendar titles:** new events are called `PENDING - name - service`. When a *confirmed*
   customer reschedules, the new event is called `CONFIRMED - …` only if your approval scenario
   writes `confirmed` into `status`.
-- **The approval scenario** (the webhook behind the Approve/Reject links) is not in this blueprint.
 - **WhatsApp 24-hour rule:** a confirmation sent more than 24 hours after the customer's last
   message needs an approved WhatsApp template.
+
+---
+
+## Payment approval scenario
+
+File: [`make/payment-approval.blueprint.json`](make/payment-approval.blueprint.json) – a **second,
+separate scenario** that runs when the owner taps APPROVE or REJECT in the payment email.
+
+```
+1 Link clicked (webhook) ─ 2 Get customer record (only with the correct token) ─ 3 Router
+   ├── Approve ─ 4 Calendar: CONFIRMED ─ 5 Status "confirmed" ─ 6 WhatsApp "booking confirmed" ─ 7 Browser: "APPROVED"
+   ├── Reject  ─ 8 Status back to "awaiting_payment" ─ 9 WhatsApp "please send proof again" ─ 10 Browser: "REJECTED"
+   └── Already handled / not found ─ 11 Browser: "Nothing changed"
+```
+
+Setup:
+1. Turn **off** any old approval scenario.
+2. Import this blueprint into a **new** scenario.
+3. Click module 1 → **Add** a new webhook → copy its address.
+4. In the booking scenario, module **3 SALON SETTINGS** → paste it into `approval_link` → Save.
+5. Turn the approval scenario **ON** (Immediately).
+
+The token in module 2's filter must match `approval_token` in the booking scenario's module 3.
+WhatsApp only delivers the confirmation if the customer messaged in the last 24 hours – if not,
+the browser page tells the owner to contact the customer directly.
 
 See [CHANGES.md](CHANGES.md) for the list of bugs fixed compared with the old version.
