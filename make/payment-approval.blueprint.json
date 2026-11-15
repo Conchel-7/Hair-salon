@@ -80,8 +80,8 @@
               "mapper": {
                 "event": "{{2.`add calender_event-id`}}",
                 "append": false,
-                "summary": "CONFIRMED - {{2.name}} - {{2.service}}",
-                "calendar": "YOUR_GOOGLE_CALENDAR_ID",
+                "summary": "CONFIRMED - {{2.name}} - {{2.service}}{{if(ifempty(2.stylist; \"-\") = \"-\"; emptystring; \" (\" + 2.stylist + \")\")}}",
+                "calendar": "{{ifempty(2.calendar; \"YOUR_GOOGLE_CALENDAR_ID\")}}",
                 "allDayEvent": false
               },
               "metadata": {
@@ -181,7 +181,7 @@
                 "type": "text",
                 "fromId": "1297676863436086",
                 "text": {
-                  "body": "✅ *Your booking is confirmed!*\n\n*{{2.service}}* on *{{formatDate(parseDate(2.date; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}}* at *{{2.time}}*\n\nThank you, we've received your payment. See you then! 💇🏾‍♀️\n\nNeed to change or cancel? Just message me here.",
+                  "body": "✅ *Your booking is confirmed!*\n\n*{{2.service}}* on *{{formatDate(parseDate(2.date; \"YYYY-MM-DD\"; \"Africa/Johannesburg\"); \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}}* at *{{2.time}}*{{if(ifempty(2.stylist; \"-\") = \"-\"; emptystring; \" with *\" + 2.stylist + \"*\")}}\n\nThank you, we've received your payment. See you then! 💇🏾‍♀️\n\nNeed to change or cancel? Just message me here.",
                   "preview_url": false
                 }
               },

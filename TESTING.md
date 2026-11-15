@@ -25,26 +25,28 @@ in the Data Store.
 | 9 | `Thando, Make-up, 25 December, 10:00` | Closed that day |
 | 10 | `Wig installation` then `Thando` then `next Tuesday at 10` | Asks only for what's missing, then books |
 
-## Several stylists (`stylists` = 4)
+## Several stylists
 
 | # | Do | Expected |
 |---|---|---|
-| 11 | In Google Calendar, add 3 events next Wednesday 10:00–12:00. Then book `Make-up, next Wednesday, 10:00` | Booked (4th stylist free) |
-| 12 | Cancel that booking (`cancel`, `yes`), add a 4th event next Wednesday 10:00–12:00 in Google Calendar, then book `Make-up, next Wednesday, 10:00` again | "all our stylists are booked" |
+| 11 | Book `Thando, Make-up, next Wednesday, 10:00` | Booked with **Stylist 1**; event in stylist 1's calendar |
+| 12 | From a second phone, book `Lebo, Resizing, next Wednesday, 10:00` | Booked with **Stylist 2** |
+| 13 | Add an `OFF` event next Wednesday 10:00–11:00 in stylist 3's **and** 4's calendars, then book the same time from a third phone | "all our stylists are booked" |
+| 14 | Book `Make-up, next Wednesday, 11:00` (Thando's make-up ends at 11:00) | Booked with **Stylist 1** again – short jobs free the stylist |
 
 ## Payment and approval
 
 | # | Do | Expected |
 |---|---|---|
-| 13 | Send a photo after booking | "received your proof of payment"; email arrives with APPROVE / REJECT |
-| 14 | Tap APPROVE | Browser "APPROVED"; WhatsApp "booking confirmed"; calendar title CONFIRMED |
-| 15 | Tap APPROVE again | Browser "Nothing changed" |
+| 15 | Send a photo after booking | "received your proof of payment"; email arrives with APPROVE / REJECT |
+| 16 | Tap APPROVE | Browser "APPROVED"; WhatsApp "booking confirmed"; calendar title CONFIRMED |
+| 17 | Tap APPROVE again | Browser "Nothing changed" |
 
 ## Reschedule and cancel
 
 | # | Send | Expected |
 |---|---|---|
-| 16 | `Can I move my appointment?` | Asks for the new date and time |
-| 17 | A new day and time | "Your appointment has been moved"; old event gone, new one in the calendar |
-| 18 | `cancel` then `no` | Appointment stays |
-| 19 | `cancel` then `yes` | "has been cancelled"; event deleted |
+| 18 | `Can I move my appointment?` | Asks for the new date and time |
+| 19 | A new day and time | "Your appointment has been moved"; old event gone, new one in the calendar |
+| 20 | `cancel` then `no` | Appointment stays |
+| 21 | `cancel` then `yes` | "has been cancelled"; event deleted |

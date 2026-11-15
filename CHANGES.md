@@ -67,3 +67,11 @@ long and random.
 - **Several stylists:** up to `stylists` (default 4) bookings can overlap.
 - A separate **payment approval scenario** that confirms the booking, updates the calendar and
   messages the customer.
+
+## Version 4
+
+- **One Google Calendar per stylist.** Each booking goes to the first stylist who is free for the
+  whole appointment, so short jobs free a stylist up straight away (more bookings per day).
+- The customer is told their stylist's name; the calendar title shows it too.
+- Stylist days off: an `OFF` event in that stylist's calendar.
+- Approval scenario updated to use the right stylist's calendar.

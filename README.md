@@ -27,7 +27,7 @@ The new version splits the job in two:
 Because Make (not the AI) writes every message that *promises* something, the bot can't
 accidentally tell a customer they're booked when they're not.
 
-### The flow (31 modules, was 45)
+### The flow (35 modules)
 
 ```
 1 WhatsApp message in
@@ -35,7 +35,7 @@ accidentally tell a customer they're booked when they're not.
 │
 ├── TEXT ─ 5 AI: understand ─ 6 Read AI answer ─ 7 Booking details ─ 8 Booking check ─ 9 Save conversation ─ 10 Router
 │                                                                                           │
-│      ├── Ready to check calendar ─ 11 Find clashing events ─ 13 Router
+│      ├── Ready to check calendar ─ 11/30/31/32 Is stylist 1/2/3/4 free? ─ 33 Pick first free stylist ─ 13 Router
 │      │        ├── Free  ─ 14 Create event ─ 15 Save booking ─ 16 Send details ─ 17 Remove old event (reschedule only)
 │      │        └── Taken ─ 18 Send "slot taken"
 │      ├── Cancel confirmed ─ 19 Delete event ─ 20 Delete record ─ 21 Send "cancelled"
@@ -88,7 +88,8 @@ Safety nets (error handlers): 50 AI is down → polite retry message · 51/52 AI
 | `opening_time`, `closing_time` | 08:00, 17:00 | Booking rules |
 | `closed_days` | `Sunday` or `Sunday, Monday` | Weekly closed days |
 | `closed_dates` | `2026-12-25, 2026-12-26` | Public holidays / days off (YYYY-MM-DD) |
-| `stylists` | 4 | How many customers can be booked at the same time |
+| `stylist_1_name` … `stylist_4_name` | Lerato | Stylist names customers are told |
+| `stylist_1_calendar` … `stylist_4_calendar` | `abc…@group.calendar.google.com` | Each stylist's own Google Calendar |
 | `days_ahead`, `notice_hours` | 60, 2 | How far ahead / how soon people can book |
 | `extra_info` | Address, parking, cancellation policy… | Extra facts the AI may answer with |
 | `payment_details` | Bank details | Sent after a booking request |
@@ -122,22 +123,34 @@ change them to the salon's real numbers before going live.
 Latest start = closing time minus the duration (e.g. 17:00 − 3 hrs = 14:00). The bot enforces it
 automatically; the `services` text just tells customers in advance.
 
-### Days off
+### Stylists – one Google Calendar each
 
-Add the date to `closed_dates`. To block one stylist for a few hours, add an event to the salon
-calendar – it uses up one of the `stylists` places for that time.
+Each booking goes to the **first stylist who is free** for the whole appointment, checked in
+their own calendar. Short jobs free a stylist up straight away for the next customer.
+
+**Setting up the calendars (once):**
+1. Stylist 1 uses the existing salon calendar.
+2. In Google Calendar (computer) → *Other calendars* → **+** → *Create new calendar* →
+   name it after the stylist. Repeat for stylists 2, 3 and 4. Give each a different colour.
+3. For each new calendar: *Settings and sharing* → scroll to **Integrate calendar** → copy the
+   **Calendar ID** (ends in `@group.calendar.google.com`).
+4. Paste the IDs and the stylists' names into module **3** (`stylist_2_calendar`, …).
+5. Data Store → your booking data structure → add two **text** fields: `stylist` and `calendar`.
+
+**Only 3 stylists?** Set `stylist_4_calendar` to the same ID as `stylist_1_calendar` and
+`stylist_4_name` to stylist 1's name.
+
+**Stylist off for a day or a few hours?** Add an event called `OFF` in *their* calendar for that
+time. Whole salon closed? Add the date to `closed_dates`.
 
 ---
 
 ## Known limits
 
-- **Several stylists, counted not named.** Up to `stylists` bookings can overlap. The bot counts
-  every event that overlaps the requested time, so it is slightly cautious (two short bookings at
-  different times inside a long appointment both count). It never double-books. The salon assigns
-  which stylist does each booking. Use a calendar that only holds salon bookings.
-- **Moving an appointment to a time that overlaps its own current slot** (e.g. one hour later on
-  the same day) says "taken". Moving it to any other free time works. This is deliberate: it can
-  never double-book.
+- **Customers can't choose a stylist yet** – they get the first one who is free.
+- Keep personal events out of the stylists' calendars: anything in a stylist's calendar blocks them.
+- **Moving an appointment to a time that overlaps its own current slot** may go to a different
+  stylist (the customer's own booking makes their current stylist look busy).
 - **Calendar titles:** new events are called `PENDING - name - service`. When a *confirmed*
   customer reschedules, the new event is called `CONFIRMED - …` only if your approval scenario
   writes `confirmed` into `status`.

@@ -92,8 +92,36 @@
             "value": "2026-12-25, 2026-12-26, 2027-01-01"
           },
           {
-            "name": "stylists",
-            "value": "4"
+            "name": "stylist_1_name",
+            "value": "Stylist 1"
+          },
+          {
+            "name": "stylist_1_calendar",
+            "value": "YOUR_GOOGLE_CALENDAR_ID"
+          },
+          {
+            "name": "stylist_2_name",
+            "value": "Stylist 2"
+          },
+          {
+            "name": "stylist_2_calendar",
+            "value": "PASTE_STYLIST_2_CALENDAR_ID"
+          },
+          {
+            "name": "stylist_3_name",
+            "value": "Stylist 3"
+          },
+          {
+            "name": "stylist_3_calendar",
+            "value": "PASTE_STYLIST_3_CALENDAR_ID"
+          },
+          {
+            "name": "stylist_4_name",
+            "value": "Stylist 4"
+          },
+          {
+            "name": "stylist_4_calendar",
+            "value": "PASTE_STYLIST_4_CALENDAR_ID"
           },
           {
             "name": "days_ahead",
@@ -180,7 +208,7 @@
               "mapper": {
                 "model": "claude-haiku-5-5",
                 "max_tokens": 1000,
-                "textPrompt": "You are {{3.bot_name}}, the friendly WhatsApp booking assistant for {{3.salon_name}}.\nReply with ONE valid JSON object only. No markdown, no code fences, no other text.\n\nSALON INFORMATION (the only facts you may use)\nServices (price · how long it takes · latest start time so it finishes by closing):\n{{3.services}}\nNumber of stylists: {{3.stylists}}. The salon decides which stylist does each appointment.\nOpening hours: {{3.opening_time}} to {{3.closing_time}}. Closed on: {{3.closed_days}}.\nBookings can be made up to {{3.days_ahead}} days ahead, with at least {{3.notice_hours}} hours' notice.\nPayment: once a booking request is saved, the customer receives the bank details, pays, and sends a screenshot of the proof of payment in this chat. The salon checks the payment and then confirms the booking.\nExtra information: {{3.extra_info}}\nSalon email: {{3.owner_email}}\nIf you are asked something not covered above, say you don't have that information and give the salon's email. Never invent prices, services, durations, discounts, addresses or bank details.\n\nTODAY: {{formatDate(now; \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}} ({{formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\")}}), South African time.\n\nTHIS CUSTOMER\nSituation: {{switch(3.customer_state; \"booking\"; \"has an upcoming appointment: \" + 3.booking_summary + \". Payment status: \" + 2.status + \" (awaiting_payment = we are waiting for their proof of payment, payment_review = the salon is checking their payment, confirmed = paid and confirmed)\"; \"draft\"; \"is in the middle of making a booking\"; \"has no upcoming appointment\")}}\nDetails we already have: name: {{ifempty(2.name; \"-\")}} | service: {{ifempty(3.saved_service; \"-\")}} | date: {{ifempty(3.saved_date; \"-\")}} | time: {{ifempty(3.saved_time; \"-\")}}\nYour previous message to them: {{ifempty(2.reply; \"(none, this is a new conversation)\")}}\n\nCUSTOMER'S NEW MESSAGE\n{{1.messages[].text.body}}\n\nSTEP 1: choose ONE action\n- \"book\": wants to make an appointment, or is giving booking details (name, service, date or time).\n- \"reschedule\": wants to move or change their existing appointment, or is giving the new date/time you asked for.\n- \"cancel_request\": asks to cancel their appointment.\n- \"cancel_confirm\": your previous message asked them to reply YES to cancel, and they now clearly agree.\n- \"menu\": a greeting (hi, hello), \"main menu\", \"start again\", \"restart\", asking how to book, asking for the price list or the services, or a general \"I want to book\" with no details at all.\n- \"chat\": anything else (questions, thanks, saying NO / keep my appointment).\n\nSTEP 2: take details from the NEW message only (use null for anything it does not contain)\n- name: the customer's name.\n- service: exactly one of the service names listed above, spelled exactly as listed (for example \"wig install\" = \"Wig installation\", \"colour\" = \"Hair colouring\", \"cornrows\" = \"Hair wash & cornrows\", \"makeup\" = \"Make-up\"). null if unclear or not offered.\n- date: YYYY-MM-DD. The day comes before the month (15/11 = 15 November). Understand words like \"tomorrow\", \"Saturday\" or \"next Friday\". If no year is given, use the next date that is not in the past.\n- time: HH:mm in 24-hour time (2pm = 14:00, half past nine in the morning = 09:30). If they only say \"morning\" or \"afternoon\", use null.\n\nSTEP 3: write \"reply\" (a WhatsApp message: short, warm, clear, English, *bold* for key details)\n- book: combine \"details we already have\" with the new ones. If anything is still missing (name, service, date or start time), list ONLY the missing items and show this example on its own line: *Thando, Wig installation, Friday 27 November, 10:00*. If nothing is missing, reply exactly: One moment, I'm checking the calendar for you...\n- reschedule: if no new date or time was given, ask which date and time they would like instead. Otherwise reply exactly: One moment, I'm checking the calendar for you...\n- menu, cancel_request or cancel_confirm: reply with an empty string \"\".\n- chat: answer helpfully and briefly using only the salon information. If they ask about a time that is too late for a service, explain the latest start time. If they say NO to cancelling, confirm that their appointment stays as it is.\nNever say that a booking is confirmed, a time is available, a payment was received, or an appointment was moved or cancelled. Other messages take care of that. Never mention JSON, statuses or \"the system\".\n\nOUTPUT FORMAT (exactly these keys)\n{\"action\": \"book\", \"name\": null, \"service\": null, \"date\": null, \"time\": null, \"reply\": \"...\"}"
+                "textPrompt": "You are {{3.bot_name}}, the friendly WhatsApp booking assistant for {{3.salon_name}}.\nReply with ONE valid JSON object only. No markdown, no code fences, no other text.\n\nSALON INFORMATION (the only facts you may use)\nServices (price · how long it takes · latest start time so it finishes by closing):\n{{3.services}}\nStylists: {{3.stylist_1_name}}, {{3.stylist_2_name}}, {{3.stylist_3_name}}, {{3.stylist_4_name}}. The system gives each booking to the first stylist who is free at that time.\nOpening hours: {{3.opening_time}} to {{3.closing_time}}. Closed on: {{3.closed_days}}.\nBookings can be made up to {{3.days_ahead}} days ahead, with at least {{3.notice_hours}} hours' notice.\nPayment: once a booking request is saved, the customer receives the bank details, pays, and sends a screenshot of the proof of payment in this chat. The salon checks the payment and then confirms the booking.\nExtra information: {{3.extra_info}}\nSalon email: {{3.owner_email}}\nIf you are asked something not covered above, say you don't have that information and give the salon's email. Never invent prices, services, durations, discounts, addresses or bank details.\n\nTODAY: {{formatDate(now; \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}} ({{formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\")}}), South African time.\n\nTHIS CUSTOMER\nSituation: {{switch(3.customer_state; \"booking\"; \"has an upcoming appointment: \" + 3.booking_summary + \". Payment status: \" + 2.status + \" (awaiting_payment = we are waiting for their proof of payment, payment_review = the salon is checking their payment, confirmed = paid and confirmed)\"; \"draft\"; \"is in the middle of making a booking\"; \"has no upcoming appointment\")}}\nDetails we already have: name: {{ifempty(2.name; \"-\")}} | service: {{ifempty(3.saved_service; \"-\")}} | date: {{ifempty(3.saved_date; \"-\")}} | time: {{ifempty(3.saved_time; \"-\")}}\nYour previous message to them: {{ifempty(2.reply; \"(none, this is a new conversation)\")}}\n\nCUSTOMER'S NEW MESSAGE\n{{1.messages[].text.body}}\n\nSTEP 1: choose ONE action\n- \"book\": wants to make an appointment, or is giving booking details (name, service, date or time).\n- \"reschedule\": wants to move or change their existing appointment, or is giving the new date/time you asked for.\n- \"cancel_request\": asks to cancel their appointment.\n- \"cancel_confirm\": your previous message asked them to reply YES to cancel, and they now clearly agree.\n- \"menu\": a greeting (hi, hello), \"main menu\", \"start again\", \"restart\", asking how to book, asking for the price list or the services, or a general \"I want to book\" with no details at all.\n- \"chat\": anything else (questions, thanks, saying NO / keep my appointment).\n\nSTEP 2: take details from the NEW message only (use null for anything it does not contain)\n- name: the customer's name.\n- service: exactly one of the service names listed above, spelled exactly as listed (for example \"wig install\" = \"Wig installation\", \"colour\" = \"Hair colouring\", \"cornrows\" = \"Hair wash & cornrows\", \"makeup\" = \"Make-up\"). null if unclear or not offered.\n- date: YYYY-MM-DD. The day comes before the month (15/11 = 15 November). Understand words like \"tomorrow\", \"Saturday\" or \"next Friday\". If no year is given, use the next date that is not in the past.\n- time: HH:mm in 24-hour time (2pm = 14:00, half past nine in the morning = 09:30). If they only say \"morning\" or \"afternoon\", use null.\n\nSTEP 3: write \"reply\" (a WhatsApp message: short, warm, clear, English, *bold* for key details)\n- book: combine \"details we already have\" with the new ones. If anything is still missing (name, service, date or start time), list ONLY the missing items and show this example on its own line: *Thando, Wig installation, Friday 27 November, 10:00*. If nothing is missing, reply exactly: One moment, I'm checking the calendar for you...\n- reschedule: if no new date or time was given, ask which date and time they would like instead. Otherwise reply exactly: One moment, I'm checking the calendar for you...\n- menu, cancel_request or cancel_confirm: reply with an empty string \"\".\n- chat: answer helpfully and briefly using only the salon information. If they ask about a time that is too late for a service, explain the latest start time. If they say NO to cancelling, confirm that their appointment stays as it is.\nNever say that a booking is confirmed, a time is available, a payment was received, or an appointment was moved or cancelled. Other messages take care of that. Never mention JSON, statuses or \"the system\".\n\nOUTPUT FORMAT (exactly these keys)\n{\"action\": \"book\", \"name\": null, \"service\": null, \"date\": null, \"time\": null, \"reply\": \"...\"}"
               },
               "metadata": {
                 "designer": {
@@ -383,6 +411,8 @@
                   "status": "{{if(3.customer_state = \"booking\"; 2.status; \"draft\")}}",
                   "payment status": "{{if(3.customer_state = \"booking\"; 2.`payment status`; emptystring)}}",
                   "add calender_event-id": "{{if(3.customer_state = \"booking\"; 2.`add calender_event-id`; emptystring)}}",
+                  "stylist": "{{if(3.customer_state = \"booking\"; 2.stylist; emptystring)}}",
+                  "calendar": "{{if(3.customer_state = \"booking\"; 2.calendar; emptystring)}}",
                   "reply": "{{ifempty(8.system_reply; if(8.wants_slot = \"yes\"; ifempty(8.slot_problem; 6.reply); 6.reply))}}"
                 }
               },
@@ -420,17 +450,17 @@
                         "__IMTCONN__": 11354421
                       },
                       "mapper": {
-                        "limit": "{{3.stylists}}",
+                        "limit": 1,
                         "timeMin": "{{7.start}}",
                         "timeMax": "{{addMinutes(7.start; 7.minutes)}}",
-                        "calendar": "YOUR_GOOGLE_CALENDAR_ID",
+                        "calendar": "{{3.stylist_1_calendar}}",
                         "singleEvents": true
                       },
                       "metadata": {
                         "designer": {
                           "x": 3000,
                           "y": 0,
-                          "name": "Find clashing events"
+                          "name": "Is stylist 1 free?"
                         }
                       },
                       "filter": {
@@ -455,6 +485,98 @@
                       }
                     },
                     {
+                      "id": 30,
+                      "module": "google-calendar:searchEvents",
+                      "version": 5,
+                      "parameters": {
+                        "__IMTCONN__": 11354421
+                      },
+                      "mapper": {
+                        "limit": 1,
+                        "timeMin": "{{7.start}}",
+                        "timeMax": "{{addMinutes(7.start; 7.minutes)}}",
+                        "calendar": "{{3.stylist_2_calendar}}",
+                        "singleEvents": true
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3300,
+                          "y": 0,
+                          "name": "Is stylist 2 free?"
+                        }
+                      }
+                    },
+                    {
+                      "id": 31,
+                      "module": "google-calendar:searchEvents",
+                      "version": 5,
+                      "parameters": {
+                        "__IMTCONN__": 11354421
+                      },
+                      "mapper": {
+                        "limit": 1,
+                        "timeMin": "{{7.start}}",
+                        "timeMax": "{{addMinutes(7.start; 7.minutes)}}",
+                        "calendar": "{{3.stylist_3_calendar}}",
+                        "singleEvents": true
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3600,
+                          "y": 0,
+                          "name": "Is stylist 3 free?"
+                        }
+                      }
+                    },
+                    {
+                      "id": 32,
+                      "module": "google-calendar:searchEvents",
+                      "version": 5,
+                      "parameters": {
+                        "__IMTCONN__": 11354421
+                      },
+                      "mapper": {
+                        "limit": 1,
+                        "timeMin": "{{7.start}}",
+                        "timeMax": "{{addMinutes(7.start; 7.minutes)}}",
+                        "calendar": "{{3.stylist_4_calendar}}",
+                        "singleEvents": true
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 3900,
+                          "y": 0,
+                          "name": "Is stylist 4 free?"
+                        }
+                      }
+                    },
+                    {
+                      "id": 33,
+                      "module": "util:SetVariables",
+                      "version": 1,
+                      "parameters": {},
+                      "mapper": {
+                        "variables": [
+                          {
+                            "name": "stylist",
+                            "value": "{{if(11.`__IMTLENGTH__` = 0; 3.stylist_1_name; if(30.`__IMTLENGTH__` = 0; 3.stylist_2_name; if(31.`__IMTLENGTH__` = 0; 3.stylist_3_name; if(32.`__IMTLENGTH__` = 0; 3.stylist_4_name; emptystring))))}}"
+                          },
+                          {
+                            "name": "calendar",
+                            "value": "{{if(11.`__IMTLENGTH__` = 0; 3.stylist_1_calendar; if(30.`__IMTLENGTH__` = 0; 3.stylist_2_calendar; if(31.`__IMTLENGTH__` = 0; 3.stylist_3_calendar; if(32.`__IMTLENGTH__` = 0; 3.stylist_4_calendar; emptystring))))}}"
+                          }
+                        ],
+                        "scope": "roundtrip"
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 4200,
+                          "y": 0,
+                          "name": "Pick the first free stylist"
+                        }
+                      }
+                    },
+                    {
                       "id": 13,
                       "module": "builtin:BasicRouter",
                       "version": 1,
@@ -462,7 +584,7 @@
                       "mapper": null,
                       "metadata": {
                         "designer": {
-                          "x": 3300,
+                          "x": 4500,
                           "y": 0,
                           "name": "Free or taken?"
                         }
@@ -481,9 +603,9 @@
                                 "start": "{{7.start}}",
                                 "end": "{{addMinutes(7.start; 7.minutes)}}",
                                 "select": "detail",
-                                "summary": "{{if(3.customer_state = \"booking\" & 2.status = \"confirmed\"; \"CONFIRMED\"; \"PENDING\")}} - {{7.name}} - {{7.service}}",
-                                "description": "WhatsApp: +{{1.messages[].from}}\nPrice: R{{7.price}}\nStylist: (to be assigned)",
-                                "calendar": "YOUR_GOOGLE_CALENDAR_ID",
+                                "summary": "{{if(3.customer_state = \"booking\" & 2.status = \"confirmed\"; \"CONFIRMED\"; \"PENDING\")}} - {{7.name}} - {{7.service}} ({{33.stylist}})",
+                                "description": "WhatsApp: +{{1.messages[].from}}\nPrice: R{{7.price}}\nStylist: {{33.stylist}}",
+                                "calendar": "{{33.calendar}}",
                                 "visibility": "default",
                                 "allDayEvent": false,
                                 "transparency": "opaque",
@@ -491,7 +613,7 @@
                               },
                               "metadata": {
                                 "designer": {
-                                  "x": 3600,
+                                  "x": 4800,
                                   "y": 0,
                                   "name": "Create calendar event"
                                 }
@@ -501,21 +623,8 @@
                                 "conditions": [
                                   [
                                     {
-                                      "a": "{{11.`__IMTLENGTH__`}}",
-                                      "o": "number:equal",
-                                      "b": "0"
-                                    }
-                                  ],
-                                  [
-                                    {
-                                      "a": "{{11.`__IMTLENGTH__`}}",
-                                      "o": "number:less",
-                                      "b": "{{3.stylists}}"
-                                    },
-                                    {
-                                      "a": "{{11.`__IMTINDEX__`}}",
-                                      "o": "number:equal",
-                                      "b": "1"
+                                      "a": "{{33.calendar}}",
+                                      "o": "exist"
                                     }
                                   ]
                                 ]
@@ -540,12 +649,14 @@
                                   "time": "{{formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\")}}",
                                   "status": "{{if(3.customer_state = \"booking\"; 2.status; \"awaiting_payment\")}}",
                                   "add calender_event-id": "{{14.id}}",
+                                  "stylist": "{{33.stylist}}",
+                                  "calendar": "{{33.calendar}}",
                                   "reply": "Appointment saved."
                                 }
                               },
                               "metadata": {
                                 "designer": {
-                                  "x": 3900,
+                                  "x": 5100,
                                   "y": 0,
                                   "name": "Save booking"
                                 }
@@ -563,13 +674,13 @@
                                 "type": "text",
                                 "fromId": "1297676863436086",
                                 "text": {
-                                  "body": "{{if(3.customer_state = \"booking\"; \"✅ *Your appointment has been moved*\"; \"📝 *Booking request received*\")}}\n\n• *Service:* {{7.service}}\n• *Date:* {{formatDate(7.start; \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}}\n• *Time:* {{formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\")}} – {{formatDate(addMinutes(7.start; 7.minutes); \"HH:mm\"; \"Africa/Johannesburg\")}}\n• *Price:* R{{7.price}}\n\n{{if(3.customer_state = \"booking\"; \"Nothing else has changed. See you then! 💇🏾‍♀️\"; \"To secure your slot, please pay using these details:\n\n\" + 3.payment_details + \"\n\nThen send a screenshot of your proof of payment here. Your booking is confirmed once the salon has checked your payment.\")}}",
+                                  "body": "{{if(3.customer_state = \"booking\"; \"✅ *Your appointment has been moved*\"; \"📝 *Booking request received*\")}}\n\n• *Service:* {{7.service}}\n• *Date:* {{formatDate(7.start; \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}}\n• *Time:* {{formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\")}} – {{formatDate(addMinutes(7.start; 7.minutes); \"HH:mm\"; \"Africa/Johannesburg\")}}\n• *Stylist:* {{33.stylist}}\n• *Price:* R{{7.price}}\n\n{{if(3.customer_state = \"booking\"; \"Nothing else has changed. See you then! 💇🏾‍♀️\"; \"To secure your slot, please pay using these details:\n\n\" + 3.payment_details + \"\n\nThen send a screenshot of your proof of payment here. Your booking is confirmed once the salon has checked your payment.\")}}",
                                   "preview_url": false
                                 }
                               },
                               "metadata": {
                                 "designer": {
-                                  "x": 4200,
+                                  "x": 5400,
                                   "y": 0,
                                   "name": "Send booking details"
                                 }
@@ -584,11 +695,11 @@
                               },
                               "mapper": {
                                 "event": "{{2.`add calender_event-id`}}",
-                                "calendar": "YOUR_GOOGLE_CALENDAR_ID"
+                                "calendar": "{{ifempty(2.calendar; \"YOUR_GOOGLE_CALENDAR_ID\")}}"
                               },
                               "metadata": {
                                 "designer": {
-                                  "x": 4500,
+                                  "x": 5700,
                                   "y": 0,
                                   "name": "Remove old event (reschedule)"
                                 }
@@ -614,7 +725,7 @@
                                   "mapper": {},
                                   "metadata": {
                                     "designer": {
-                                      "x": 4500,
+                                      "x": 5700,
                                       "y": 250
                                     }
                                   }
@@ -643,7 +754,7 @@
                               },
                               "metadata": {
                                 "designer": {
-                                  "x": 3600,
+                                  "x": 4800,
                                   "y": 400,
                                   "name": "Send: slot taken"
                                 }
@@ -653,14 +764,8 @@
                                 "conditions": [
                                   [
                                     {
-                                      "a": "{{11.`__IMTLENGTH__`}}",
-                                      "o": "number:greaterorequal",
-                                      "b": "{{3.stylists}}"
-                                    },
-                                    {
-                                      "a": "{{11.`__IMTINDEX__`}}",
-                                      "o": "number:equal",
-                                      "b": "1"
+                                      "a": "{{33.calendar}}",
+                                      "o": "notexist"
                                     }
                                   ]
                                 ]
@@ -683,7 +788,7 @@
                       },
                       "mapper": {
                         "event": "{{2.`add calender_event-id`}}",
-                        "calendar": "YOUR_GOOGLE_CALENDAR_ID"
+                        "calendar": "{{ifempty(2.calendar; \"YOUR_GOOGLE_CALENDAR_ID\")}}"
                       },
                       "metadata": {
                         "designer": {
