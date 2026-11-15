@@ -8,15 +8,14 @@ When someone messages your WhatsApp Business number, this Make.com scenario:
 3. Thanks them.
 4. **Emails you** their name, surname, cellphone, email and their message.
 
-Turn the scenario **ON** when you're busy and **OFF** when you want to reply yourself.
-You can also make it run only outside your working hours (see the end of this guide).
+It runs **24/7**: every new person who messages gets an instant reply, day or night.
 
 ---
 
 ## Example chat
 
 > **Client:** Hi, I saw your post about AI automations
-> **Bot:** Hi 👋 Thanks for contacting **[Your Business]**! I'm busy right now, but I'll get back to you as soon as I can. While you wait, what's your **first name**?
+> **Bot:** Hi 👋 Thanks for contacting **Conchel AI Automation**! I'm busy right now, but I'll get back to you as soon as I can. While you wait, what's your **first name**?
 > **Client:** Thabo
 > **Bot:** Nice to meet you, Thabo! What's your **surname**?
 > **Client:** Mokoena
@@ -48,7 +47,7 @@ Message:    I want to automate replies to my customers' questions
     Meta's **Coexistence** option lets you keep using the app on the same number. If you use it, check that
     messages reach Make. Some Make users report the Watch Events trigger not firing with Coexistence.
     If that happens, use a separate number for the bot.
-- An email connection in Make (Gmail, Outlook, or the built-in **Email** app with SMTP).
+- A **Gmail** connection in Make (to send the lead emails to you).
 
 ---
 
@@ -115,7 +114,7 @@ On every route, add these two modules:
 
 #### Route A: New conversation
 - **Send a Message:**
-  `Hi 👋 Thanks for contacting [Your Business]! I'm busy right now, but I'll get back to you as soon as I can. While you wait, what's your first name?`
+  `Hi 👋 Thanks for contacting Conchel AI Automation! I'm busy right now, but I'll get back to you as soon as I can. While you wait, what's your first name?`
 - **Add/replace a record:** step = `firstName`, firstName / surname / email / inquiry = *(empty)*, updatedAt = `{{now}}`
 
 #### Route B: Got first name
@@ -137,8 +136,8 @@ On every route, add these two modules:
 #### Route F: Got inquiry (thank them and email you)
 1. **Send a Message:** `Thank you, {{2.firstName}}! 🙏 I've got all your details and will be in touch soon.`
 2. **Add/replace:** step = `done`, firstName = `{{2.firstName}}`, surname = `{{2.surname}}`, email = `{{2.email}}`, inquiry = `TEXT`, updatedAt = `{{now}}`
-3. **Gmail › Send an email** (or **Email › Send an email**):
-   - To: *your email address*
+3. **Gmail › Send an email** (connect your Gmail account):
+   - To: *your Gmail address*
    - Subject: `New WhatsApp lead: {{2.firstName}} {{2.surname}}`
    - Content type: HTML
    - Body:
@@ -159,14 +158,6 @@ On every route, add these two modules:
 - To test again with the same phone, open **Data stores → WhatsApp Leads** and delete that number's record.
 
 ---
-
-## Only reply outside working hours (optional)
-
-Instead of switching the scenario on and off by hand, add a second condition to the **Only text messages** filter (with AND):
-
-- `{{formatDate(now; "H"; "Africa/Johannesburg")}}` *Numeric: less than* `8` **OR** *greater than or equal to* `17`
-
-Change the timezone and hours to suit you. Then the bot only answers before 08:00 and from 17:00 onwards.
 
 ## Notes
 - WhatsApp lets businesses send free-form replies within **24 hours** of the client's last message. This bot always replies right away, so that's fine.
