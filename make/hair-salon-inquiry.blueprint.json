@@ -1,0 +1,82 @@
+{
+  "name": "Hair Salon - Customer Inquiry",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": null,
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0, "name": "New customer inquiry" }
+      }
+    },
+    {
+      "id": 2,
+      "module": "email:ActionSendEme",
+      "version": 7,
+      "parameters": {
+        "account": null
+      },
+      "filter": {
+        "name": "Name, cellphone and email filled in",
+        "conditions": [
+          [
+            { "a": "{{1.firstName}}", "o": "exist" },
+            { "a": "{{1.cellphone}}", "o": "exist" },
+            { "a": "{{1.email}}", "o": "exist" }
+          ]
+        ]
+      },
+      "mapper": {
+        "from": "",
+        "to": ["YOUR_EMAIL@example.com"],
+        "subject": "New salon inquiry from {{1.firstName}} {{1.surname}}",
+        "contentType": "html",
+        "html": "<h2>New customer inquiry</h2><table cellpadding=\"6\" style=\"border-collapse:collapse;font-family:Arial,sans-serif\"><tr><td><b>Name</b></td><td>{{1.firstName}}</td></tr><tr><td><b>Surname</b></td><td>{{1.surname}}</td></tr><tr><td><b>Cellphone</b></td><td>{{1.cellphone}}</td></tr><tr><td><b>Email</b></td><td>{{1.email}}</td></tr><tr><td valign=\"top\"><b>Inquiry</b></td><td>{{1.inquiry}}</td></tr></table><p style=\"color:#888;font-size:12px\">Received {{formatDate(now; \"DD MMM YYYY HH:mm\")}}</p>",
+        "attachments": [],
+        "cc": [],
+        "bcc": []
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0, "name": "Email me the inquiry" }
+      }
+    },
+    {
+      "id": 3,
+      "module": "gateway:WebhookRespond",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "status": "200",
+        "body": "Thank you, {{1.firstName}}! We've received your message and will get back to you shortly on {{1.cellphone}} or {{1.email}}.",
+        "headers": [
+          { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+          { "key": "Access-Control-Allow-Origin", "value": "*" }
+        ]
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0, "name": "Thank the customer" }
+      }
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": { "orphans": [] }
+  }
+}
