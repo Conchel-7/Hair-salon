@@ -73,7 +73,7 @@
           },
           {
             "name": "services",
-            "value": "• Knotless braids – R650 (about 5 hours)\n• Box braids – R700 (about 5 hours)\n• Wig installation – R500 (about 2 hours)\n• Hair treatment – R350 (about 1 hour)"
+            "value": "• *Wig installation* – R450 · 1½ hrs · start by 15:30\n• *Direct install* – R550 · 2½ hrs · start by 14:30\n• *Customization* – R250 · 1½ hrs · start by 15:30\n• *Styling & curling* – R250 · 1 hr · start by 16:00\n• *Make-up* – R450 · 1 hr · start by 16:00\n• *Hair wash & cornrows* – R250 · 1½ hrs · start by 15:30\n• *Wig treatment* – R300 · 1½ hrs · start by 15:30\n• *Hair colouring* – from R650 · 3 hrs · start by 14:00\n• *Wig making* – from R600 · 4 hrs · start by 13:00\n• *Resizing* – R150 · 30 min · start by 16:30"
           },
           {
             "name": "opening_time",
@@ -86,6 +86,14 @@
           {
             "name": "closed_days",
             "value": "Sunday"
+          },
+          {
+            "name": "closed_dates",
+            "value": "2026-12-25, 2026-12-26, 2027-01-01"
+          },
+          {
+            "name": "stylists",
+            "value": "4"
           },
           {
             "name": "days_ahead",
@@ -172,7 +180,7 @@
               "mapper": {
                 "model": "claude-haiku-5-5",
                 "max_tokens": 1000,
-                "textPrompt": "You are {{3.bot_name}}, the friendly WhatsApp booking assistant for {{3.salon_name}}.\nReply with ONE valid JSON object only. No markdown, no code fences, no other text.\n\nSALON INFORMATION (the only facts you may use)\nServices and prices:\n{{3.services}}\nOpening hours: {{3.opening_time}} to {{3.closing_time}}. Closed on: {{3.closed_days}}.\nBookings can be made up to {{3.days_ahead}} days ahead, with at least {{3.notice_hours}} hours' notice.\nPayment: once a booking request is saved, the customer receives the bank details, pays, and sends a screenshot of the proof of payment in this chat. The salon checks the payment and then confirms the booking.\nExtra information: {{3.extra_info}}\nSalon email: {{3.owner_email}}\nIf you are asked something not covered above, say you don't have that information and give the salon's email. Never invent prices, services, durations, discounts, addresses or bank details.\n\nTODAY: {{formatDate(now; \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}} ({{formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\")}}), South African time.\n\nTHIS CUSTOMER\nSituation: {{switch(3.customer_state; \"booking\"; \"has an upcoming appointment: \" + 3.booking_summary + \". Payment status: \" + 2.status + \" (awaiting_payment = we are waiting for their proof of payment, payment_review = the salon is checking their payment, confirmed = paid and confirmed)\"; \"draft\"; \"is in the middle of making a booking\"; \"has no upcoming appointment\")}}\nDetails we already have: name: {{ifempty(2.name; \"-\")}} | service: {{ifempty(3.saved_service; \"-\")}} | date: {{ifempty(3.saved_date; \"-\")}} | time: {{ifempty(3.saved_time; \"-\")}}\nYour previous message to them: {{ifempty(2.reply; \"(none, this is a new conversation)\")}}\n\nCUSTOMER'S NEW MESSAGE\n{{1.messages[].text.body}}\n\nSTEP 1: choose ONE action\n- \"book\": wants to make an appointment, or is giving booking details (name, service, date or time).\n- \"reschedule\": wants to move or change their existing appointment, or is giving the new date/time you asked for.\n- \"cancel_request\": asks to cancel their appointment.\n- \"cancel_confirm\": your previous message asked them to reply YES to cancel, and they now clearly agree.\n- \"chat\": anything else (greetings, questions, thanks, saying NO / keep my appointment).\n\nSTEP 2: take details from the NEW message only (use null for anything it does not contain)\n- name: the customer's name.\n- service: exactly one of the service names listed above, spelled exactly as listed (for example \"knotless\" = \"Knotless braids\"). null if unclear or not offered.\n- date: YYYY-MM-DD. The day comes before the month (15/11 = 15 November). Understand words like \"tomorrow\", \"Saturday\" or \"next Friday\". If no year is given, use the next date that is not in the past.\n- time: HH:mm in 24-hour time (2pm = 14:00, half past nine in the morning = 09:30). If they only say \"morning\" or \"afternoon\", use null.\n\nSTEP 3: write \"reply\" (a WhatsApp message: short, warm, clear, English, *bold* for key details)\n- book: combine \"details we already have\" with the new ones. If anything is still missing (name, service, date or time), ask for ALL the missing items in one short question. If nothing is missing, reply exactly: One moment, I'm checking the calendar for you...\n- reschedule: if no new date or time was given, ask which date and time they would like instead. Otherwise reply exactly: One moment, I'm checking the calendar for you...\n- cancel_request or cancel_confirm: reply with an empty string \"\".\n- chat: answer helpfully using only the salon information. When someone without an appointment greets you, welcome them, list the services with prices and ask what they would like to book. If they say NO to cancelling, confirm that their appointment stays as it is.\nNever say that a booking is confirmed, a time is available, a payment was received, or an appointment was moved or cancelled. Other messages take care of that. Never mention JSON, statuses or \"the system\".\n\nOUTPUT FORMAT (exactly these keys)\n{\"action\": \"book\", \"name\": null, \"service\": null, \"date\": null, \"time\": null, \"reply\": \"...\"}"
+                "textPrompt": "You are {{3.bot_name}}, the friendly WhatsApp booking assistant for {{3.salon_name}}.\nReply with ONE valid JSON object only. No markdown, no code fences, no other text.\n\nSALON INFORMATION (the only facts you may use)\nServices (price · how long it takes · latest start time so it finishes by closing):\n{{3.services}}\nNumber of stylists: {{3.stylists}}. The salon decides which stylist does each appointment.\nOpening hours: {{3.opening_time}} to {{3.closing_time}}. Closed on: {{3.closed_days}}.\nBookings can be made up to {{3.days_ahead}} days ahead, with at least {{3.notice_hours}} hours' notice.\nPayment: once a booking request is saved, the customer receives the bank details, pays, and sends a screenshot of the proof of payment in this chat. The salon checks the payment and then confirms the booking.\nExtra information: {{3.extra_info}}\nSalon email: {{3.owner_email}}\nIf you are asked something not covered above, say you don't have that information and give the salon's email. Never invent prices, services, durations, discounts, addresses or bank details.\n\nTODAY: {{formatDate(now; \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}} ({{formatDate(now; \"YYYY-MM-DD\"; \"Africa/Johannesburg\")}}), South African time.\n\nTHIS CUSTOMER\nSituation: {{switch(3.customer_state; \"booking\"; \"has an upcoming appointment: \" + 3.booking_summary + \". Payment status: \" + 2.status + \" (awaiting_payment = we are waiting for their proof of payment, payment_review = the salon is checking their payment, confirmed = paid and confirmed)\"; \"draft\"; \"is in the middle of making a booking\"; \"has no upcoming appointment\")}}\nDetails we already have: name: {{ifempty(2.name; \"-\")}} | service: {{ifempty(3.saved_service; \"-\")}} | date: {{ifempty(3.saved_date; \"-\")}} | time: {{ifempty(3.saved_time; \"-\")}}\nYour previous message to them: {{ifempty(2.reply; \"(none, this is a new conversation)\")}}\n\nCUSTOMER'S NEW MESSAGE\n{{1.messages[].text.body}}\n\nSTEP 1: choose ONE action\n- \"book\": wants to make an appointment, or is giving booking details (name, service, date or time).\n- \"reschedule\": wants to move or change their existing appointment, or is giving the new date/time you asked for.\n- \"cancel_request\": asks to cancel their appointment.\n- \"cancel_confirm\": your previous message asked them to reply YES to cancel, and they now clearly agree.\n- \"menu\": a greeting (hi, hello), \"main menu\", \"start again\", \"restart\", asking how to book, asking for the price list or the services, or a general \"I want to book\" with no details at all.\n- \"chat\": anything else (questions, thanks, saying NO / keep my appointment).\n\nSTEP 2: take details from the NEW message only (use null for anything it does not contain)\n- name: the customer's name.\n- service: exactly one of the service names listed above, spelled exactly as listed (for example \"wig install\" = \"Wig installation\", \"colour\" = \"Hair colouring\", \"cornrows\" = \"Hair wash & cornrows\", \"makeup\" = \"Make-up\"). null if unclear or not offered.\n- date: YYYY-MM-DD. The day comes before the month (15/11 = 15 November). Understand words like \"tomorrow\", \"Saturday\" or \"next Friday\". If no year is given, use the next date that is not in the past.\n- time: HH:mm in 24-hour time (2pm = 14:00, half past nine in the morning = 09:30). If they only say \"morning\" or \"afternoon\", use null.\n\nSTEP 3: write \"reply\" (a WhatsApp message: short, warm, clear, English, *bold* for key details)\n- book: combine \"details we already have\" with the new ones. If anything is still missing (name, service, date or start time), list ONLY the missing items and show this example on its own line: *Thando, Wig installation, Friday 27 November, 10:00*. If nothing is missing, reply exactly: One moment, I'm checking the calendar for you...\n- reschedule: if no new date or time was given, ask which date and time they would like instead. Otherwise reply exactly: One moment, I'm checking the calendar for you...\n- menu, cancel_request or cancel_confirm: reply with an empty string \"\".\n- chat: answer helpfully and briefly using only the salon information. If they ask about a time that is too late for a service, explain the latest start time. If they say NO to cancelling, confirm that their appointment stays as it is.\nNever say that a booking is confirmed, a time is available, a payment was received, or an appointment was moved or cancelled. Other messages take care of that. Never mention JSON, statuses or \"the system\".\n\nOUTPUT FORMAT (exactly these keys)\n{\"action\": \"book\", \"name\": null, \"service\": null, \"date\": null, \"time\": null, \"reply\": \"...\"}"
               },
               "metadata": {
                 "designer": {
@@ -292,15 +300,23 @@
                   },
                   {
                     "name": "price",
-                    "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Knotless braids\"; 650; \"Box braids\"; 700; \"Wig installation\"; 500; \"Hair treatment\"; 350; emptystring)}}"
+                    "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Wig installation\"; 450; \"Direct install\"; 550; \"Customization\"; 250; \"Styling & curling\"; 250; \"Make-up\"; 450; \"Hair wash & cornrows\"; 250; \"Wig treatment\"; 300; \"Hair colouring\"; 650; \"Wig making\"; 600; \"Resizing\"; 150; emptystring)}}"
                   },
                   {
-                    "name": "hours",
-                    "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Knotless braids\"; 5; \"Box braids\"; 5; \"Wig installation\"; 2; \"Hair treatment\"; 1; emptystring)}}"
+                    "name": "minutes",
+                    "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Wig installation\"; 90; \"Direct install\"; 150; \"Customization\"; 90; \"Styling & curling\"; 60; \"Make-up\"; 60; \"Hair wash & cornrows\"; 90; \"Wig treatment\"; 90; \"Hair colouring\"; 180; \"Wig making\"; 240; \"Resizing\"; 30; emptystring)}}"
                   },
                   {
-                    "name": "minus_hours",
-                    "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Knotless braids\"; -5; \"Box braids\"; -5; \"Wig installation\"; -2; \"Hair treatment\"; -1; emptystring)}}"
+                    "name": "minus_minutes",
+                    "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Wig installation\"; -90; \"Direct install\"; -150; \"Customization\"; -90; \"Styling & curling\"; -60; \"Make-up\"; -60; \"Hair wash & cornrows\"; -90; \"Wig treatment\"; -90; \"Hair colouring\"; -180; \"Wig making\"; -240; \"Resizing\"; -30; emptystring)}}"
+                  },
+                  {
+                    "name": "duration",
+                    "value": "{{switch(if(3.customer_state = \"booking\"; 2.service; ifempty(6.service; 3.saved_service)); \"Wig installation\"; \"1½ hrs\"; \"Direct install\"; \"2½ hrs\"; \"Customization\"; \"1½ hrs\"; \"Styling & curling\"; \"1 hr\"; \"Make-up\"; \"1 hr\"; \"Hair wash & cornrows\"; \"1½ hrs\"; \"Wig treatment\"; \"1½ hrs\"; \"Hair colouring\"; \"3 hrs\"; \"Wig making\"; \"4 hrs\"; \"Resizing\"; \"30 min\"; emptystring)}}"
+                  },
+                  {
+                    "name": "menu",
+                    "value": "Hi! 👋 Welcome to *{{3.salon_name}}*. I'm {{3.bot_name}} and I can book your appointment.\n\n*OUR SERVICES*\n(price · how long · latest start time)\n{{3.services}}\n\n🕗 *Open* {{3.opening_time}}–{{3.closing_time}} · *Closed* {{3.closed_days}}s\n⏰ Every appointment must *finish by {{3.closing_time}}*, so please start no later than the time shown next to your service.\n\n✍️ *To book, send ONE message with:*\n1. Your name\n2. The service\n3. The date\n4. The start time (on the hour or half hour, e.g. 10:00 or 10:30)\n\n*Example:* Thando, Wig installation, Friday 27 November, 10:00"
                   },
                   {
                     "name": "start",
@@ -330,11 +346,11 @@
                   },
                   {
                     "name": "system_reply",
-                    "value": "{{if(3.customer_state = \"booking\"; if(6.action = \"book\"; \"You already have an appointment: \" + 3.booking_summary + \".\n\nI can only hold one appointment per phone number. Reply *change* to move it, or *cancel* to cancel it.\"; if(6.action = \"cancel_request\"; \"Are you sure you want to cancel your appointment: \" + 3.booking_summary + \"?\n\nReply YES to cancel, or NO to keep it.\"; if(6.action = \"cancel_confirm\"; if(contains(lower(2.reply); \"yes to cancel\"); emptystring; \"Are you sure you want to cancel your appointment: \" + 3.booking_summary + \"?\n\nReply YES to cancel, or NO to keep it.\"); emptystring))); if(6.action = \"reschedule\" | 6.action = \"cancel_request\" | 6.action = \"cancel_confirm\"; \"I couldn't find an upcoming appointment for this number. 🙂\n\nWould you like to make a booking? Just tell me the service, date and time you'd like.\"; emptystring))}}"
+                    "value": "{{if(6.action = \"menu\"; if(3.customer_state = \"booking\"; 7.menu + \"\n\n📅 *Your appointment:* \" + 3.booking_summary + \". Reply *change* to move it or *cancel* to cancel it.\"; 7.menu); if(3.customer_state = \"booking\"; if(6.action = \"book\"; \"You already have an appointment: \" + 3.booking_summary + \".\n\nI can only hold one appointment per phone number. Reply *change* to move it, or *cancel* to cancel it.\"; if(6.action = \"cancel_request\"; \"Are you sure you want to cancel your appointment: \" + 3.booking_summary + \"?\n\nReply YES to cancel, or NO to keep it.\"; if(6.action = \"cancel_confirm\"; if(contains(lower(2.reply); \"yes to cancel\"); emptystring; \"Are you sure you want to cancel your appointment: \" + 3.booking_summary + \"?\n\nReply YES to cancel, or NO to keep it.\"); emptystring))); if(6.action = \"reschedule\" | 6.action = \"cancel_request\" | 6.action = \"cancel_confirm\"; \"I couldn't find an upcoming appointment for this number. 🙂\n\nTo make a booking, send ONE message with your name, the service, the date and the start time.\n*Example:* Thando, Wig installation, Friday 27 November, 10:00\"; emptystring)))}}"
                   },
                   {
                     "name": "slot_problem",
-                    "value": "{{if(contains(3.closed_days; formatDate(7.start; \"dddd\"; \"Africa/Johannesburg\")); \"Sorry, we're closed on \" + formatDate(7.start; \"dddd\"; \"Africa/Johannesburg\") + \"s. We're open \" + 3.opening_time + \" to \" + 3.closing_time + \". Please choose another day.\"; if(7.start < addHours(now; 3.notice_hours); \"That time has already passed or is too soon. Please choose a time at least \" + 3.notice_hours + \" hours from now.\"; if(7.start > addDays(now; 3.days_ahead); \"We can only take bookings up to \" + 3.days_ahead + \" days ahead. Please choose an earlier date.\"; if(7.start < parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.opening_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); \"We open at \" + 3.opening_time + \". Please choose a later time.\"; if(addHours(7.start; 7.hours) > parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.closing_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); 7.service + \" takes about \" + 7.hours + \" hours and we close at \" + 3.closing_time + \", so the latest start time is *\" + formatDate(addHours(parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.closing_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); 7.minus_hours); \"HH:mm\"; \"Africa/Johannesburg\") + \"*. Please choose an earlier time.\"; emptystring)))))}}"
+                    "value": "{{if(contains(3.closed_days; formatDate(7.start; \"dddd\"; \"Africa/Johannesburg\")); \"Sorry, we're closed on \" + formatDate(7.start; \"dddd\"; \"Africa/Johannesburg\") + \"s. We're open \" + 3.opening_time + \" to \" + 3.closing_time + \". Please choose another day.\"; if(contains(3.closed_dates; formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\")); \"Sorry, the salon is closed on \" + formatDate(7.start; \"dddd D MMMM\"; \"Africa/Johannesburg\") + \". Please choose another day.\"; if(formatDate(7.start; \"mm\"; \"Africa/Johannesburg\") != \"00\" & formatDate(7.start; \"mm\"; \"Africa/Johannesburg\") != \"30\"; \"Please choose a start time on the hour or half hour, for example *10:00* or *10:30*.\"; if(7.start < addHours(now; 3.notice_hours); \"That time has already passed or is too soon. Please choose a time at least \" + 3.notice_hours + \" hours from now.\"; if(7.start > addDays(now; 3.days_ahead); \"We can only take bookings up to \" + 3.days_ahead + \" days ahead. Please choose an earlier date.\"; if(7.start < parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.opening_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); \"We open at \" + 3.opening_time + \". Please choose a later time.\"; if(addMinutes(7.start; 7.minutes) > parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.closing_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); \"*\" + 7.service + \"* takes about \" + 7.duration + \" and must finish by \" + 3.closing_time + \", so the *latest start time is \" + formatDate(addMinutes(parseDate(formatDate(7.start; \"YYYY-MM-DD\"; \"Africa/Johannesburg\") + \" \" + 3.closing_time; \"YYYY-MM-DD HH:mm\"; \"Africa/Johannesburg\"); 7.minus_minutes); \"HH:mm\"; \"Africa/Johannesburg\") + \"*. Please choose an earlier time or another day.\"; emptystring)))))))}}"
                   }
                 ],
                 "scope": "roundtrip"
@@ -404,9 +420,9 @@
                         "__IMTCONN__": 11354421
                       },
                       "mapper": {
-                        "limit": 1,
+                        "limit": "{{3.stylists}}",
                         "timeMin": "{{7.start}}",
-                        "timeMax": "{{addHours(7.start; 7.hours)}}",
+                        "timeMax": "{{addMinutes(7.start; 7.minutes)}}",
                         "calendar": "YOUR_GOOGLE_CALENDAR_ID",
                         "singleEvents": true
                       },
@@ -463,10 +479,10 @@
                               },
                               "mapper": {
                                 "start": "{{7.start}}",
-                                "end": "{{addHours(7.start; 7.hours)}}",
+                                "end": "{{addMinutes(7.start; 7.minutes)}}",
                                 "select": "detail",
                                 "summary": "{{if(3.customer_state = \"booking\" & 2.status = \"confirmed\"; \"CONFIRMED\"; \"PENDING\")}} - {{7.name}} - {{7.service}}",
-                                "description": "WhatsApp: +{{1.messages[].from}}\nPrice: R{{7.price}}",
+                                "description": "WhatsApp: +{{1.messages[].from}}\nPrice: R{{7.price}}\nStylist: (to be assigned)",
                                 "calendar": "YOUR_GOOGLE_CALENDAR_ID",
                                 "visibility": "default",
                                 "allDayEvent": false,
@@ -481,13 +497,25 @@
                                 }
                               },
                               "filter": {
-                                "name": "Slot is free",
+                                "name": "A stylist is free",
                                 "conditions": [
                                   [
                                     {
                                       "a": "{{11.`__IMTLENGTH__`}}",
                                       "o": "number:equal",
                                       "b": "0"
+                                    }
+                                  ],
+                                  [
+                                    {
+                                      "a": "{{11.`__IMTLENGTH__`}}",
+                                      "o": "number:less",
+                                      "b": "{{3.stylists}}"
+                                    },
+                                    {
+                                      "a": "{{11.`__IMTINDEX__`}}",
+                                      "o": "number:equal",
+                                      "b": "1"
                                     }
                                   ]
                                 ]
@@ -535,7 +563,7 @@
                                 "type": "text",
                                 "fromId": "1297676863436086",
                                 "text": {
-                                  "body": "{{if(3.customer_state = \"booking\"; \"✅ *Your appointment has been moved*\"; \"📝 *Booking request received*\")}}\n\n• *Service:* {{7.service}}\n• *Date:* {{formatDate(7.start; \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}}\n• *Time:* {{formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\")}} – {{formatDate(addHours(7.start; 7.hours); \"HH:mm\"; \"Africa/Johannesburg\")}}\n• *Price:* R{{7.price}}\n\n{{if(3.customer_state = \"booking\"; \"Nothing else has changed. See you then! 💇🏾‍♀️\"; \"To secure your slot, please pay using these details:\n\n\" + 3.payment_details + \"\n\nThen send a screenshot of your proof of payment here. Your booking is confirmed once the salon has checked your payment.\")}}",
+                                  "body": "{{if(3.customer_state = \"booking\"; \"✅ *Your appointment has been moved*\"; \"📝 *Booking request received*\")}}\n\n• *Service:* {{7.service}}\n• *Date:* {{formatDate(7.start; \"dddd D MMMM YYYY\"; \"Africa/Johannesburg\")}}\n• *Time:* {{formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\")}} – {{formatDate(addMinutes(7.start; 7.minutes); \"HH:mm\"; \"Africa/Johannesburg\")}}\n• *Price:* R{{7.price}}\n\n{{if(3.customer_state = \"booking\"; \"Nothing else has changed. See you then! 💇🏾‍♀️\"; \"To secure your slot, please pay using these details:\n\n\" + 3.payment_details + \"\n\nThen send a screenshot of your proof of payment here. Your booking is confirmed once the salon has checked your payment.\")}}",
                                   "preview_url": false
                                 }
                               },
@@ -609,7 +637,7 @@
                                 "type": "text",
                                 "fromId": "1297676863436086",
                                 "text": {
-                                  "body": "Sorry, that time is already taken: *{{7.service}}* on *{{formatDate(7.start; \"dddd D MMMM\"; \"Africa/Johannesburg\")}}* at *{{formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\")}}*. 😔\n\n{{if(3.customer_state = \"booking\"; \"Your current appointment has not changed. \"; emptystring)}}Please send me another date or time and I'll check it for you.",
+                                  "body": "Sorry, all our stylists are booked for *{{7.service}}* on *{{formatDate(7.start; \"dddd D MMMM\"; \"Africa/Johannesburg\")}}* at *{{formatDate(7.start; \"HH:mm\"; \"Africa/Johannesburg\")}}*. 😔\n\n{{if(3.customer_state = \"booking\"; \"Your current appointment has not changed. \"; emptystring)}}Please send me another date or time and I'll check it for you.",
                                   "preview_url": false
                                 }
                               },
@@ -621,13 +649,18 @@
                                 }
                               },
                               "filter": {
-                                "name": "Slot is taken",
+                                "name": "All stylists busy",
                                 "conditions": [
                                   [
                                     {
                                       "a": "{{11.`__IMTLENGTH__`}}",
-                                      "o": "number:greater",
-                                      "b": "0"
+                                      "o": "number:greaterorequal",
+                                      "b": "{{3.stylists}}"
+                                    },
+                                    {
+                                      "a": "{{11.`__IMTINDEX__`}}",
+                                      "o": "number:equal",
+                                      "b": "1"
                                     }
                                   ]
                                 ]

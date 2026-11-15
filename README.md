@@ -55,7 +55,7 @@ Safety nets (error handlers): 50 AI is down → polite retry message · 51/52 AI
 | Field | Meaning |
 |---|---|
 | `name`, `service`, `date`, `time`, `price` | The booking (or the details collected so far) |
-| `status` | `draft` → `awaiting_payment` → `payment_review` → `confirmed` *(set by your approval scenario)* |
+| `status` | `draft` → `awaiting_payment` → `payment_review` → `confirmed` *(set by the approval scenario)* |
 | `add calender_event-id` | The Google Calendar event (empty while still a draft) |
 | `reply` | The last message the bot sent – gives the AI conversation context and makes "YES" to cancel safe |
 | `payment status`, `is_complete` | No longer used – can be deleted later |
@@ -84,32 +84,57 @@ Safety nets (error handlers): 50 AI is down → polite retry message · 51/52 AI
 | Setting | Example | Used for |
 |---|---|---|
 | `salon_name`, `bot_name` | Conchel's Hair Salon, Maia | Greeting / AI personality |
-| `services` | `• Box braids – R700 (about 5 hours)` | What the AI tells customers |
+| `services` | `• *Wig installation* – R450 · 1½ hrs · start by 15:30` | The price list customers see |
 | `opening_time`, `closing_time` | 08:00, 17:00 | Booking rules |
-| `closed_days` | `Sunday` or `Sunday, Monday` | Booking rules |
+| `closed_days` | `Sunday` or `Sunday, Monday` | Weekly closed days |
+| `closed_dates` | `2026-12-25, 2026-12-26` | Public holidays / days off (YYYY-MM-DD) |
+| `stylists` | 4 | How many customers can be booked at the same time |
 | `days_ahead`, `notice_hours` | 60, 2 | How far ahead / how soon people can book |
 | `extra_info` | Address, parking, cancellation policy… | Extra facts the AI may answer with |
 | `payment_details` | Bank details | Sent after a booking request |
 | `owner_email` | | Payment emails + customer help |
 | `approval_link`, `approval_token` | | Approve / reject links in the email |
 
-### Adding a service or changing a price – 2 places
+### Services, prices and times (estimates – please check them)
 
-1. Module **3** → `services` (the text customers see).
-2. Module **7 Booking details** → `price` and `hours` (the numbers the system uses).
-   Add the new name to **both** formulas, spelled exactly the same as in step 1.
+| Service | Price | Takes | Latest start |
+|---|---|---|---|
+| Wig installation | R450 | 1½ hrs | 15:30 |
+| Direct install | R550 | 2½ hrs | 14:30 |
+| Customization | R250 | 1½ hrs | 15:30 |
+| Styling & curling | R250 | 1 hr | 16:00 |
+| Make-up | R450 | 1 hr | 16:00 |
+| Hair wash & cornrows | R250 | 1½ hrs | 15:30 |
+| Wig treatment | R300 | 1½ hrs | 15:30 |
+| Hair colouring | from R650 | 3 hrs | 14:00 |
+| Wig making | from R600 | 4 hrs | 13:00 |
+| Resizing | R150 | 30 min | 16:30 |
 
-### Blocking a day off or a lunch break
+Prices are typical South African mall-salon prices for 2026 and durations are estimates –
+change them to the salon's real numbers before going live.
 
-Just add an event to the salon Google Calendar. Any event in that time (including all-day events)
-blocks bookings automatically.
+### Adding a service or changing a price / duration
+
+1. Module **3** → `services`: the line customers see (price, time, latest start).
+2. Module **7 Booking details** → the same service name, spelled exactly the same, in the
+   `price`, `minutes`, `minus_minutes` (same number with a minus) and `duration` formulas.
+
+Latest start = closing time minus the duration (e.g. 17:00 − 3 hrs = 14:00). The bot enforces it
+automatically; the `services` text just tells customers in advance.
+
+### Days off
+
+Add the date to `closed_dates`. To block one stylist for a few hours, add an event to the salon
+calendar – it uses up one of the `stylists` places for that time.
 
 ---
 
 ## Known limits
 
-- **One booking at a time for the whole salon.** Any event in the calendar blocks that time.
-  Use a calendar that only holds salon bookings.
+- **Several stylists, counted not named.** Up to `stylists` bookings can overlap. The bot counts
+  every event that overlaps the requested time, so it is slightly cautious (two short bookings at
+  different times inside a long appointment both count). It never double-books. The salon assigns
+  which stylist does each booking. Use a calendar that only holds salon bookings.
 - **Moving an appointment to a time that overlaps its own current slot** (e.g. one hour later on
   the same day) says "taken". Moving it to any other free time works. This is deliberate: it can
   never double-book.

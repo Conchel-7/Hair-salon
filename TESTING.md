@@ -1,46 +1,50 @@
-# Test checklist
+# Test checklist (v3)
 
-Run these from your own WhatsApp before switching the scenario on for real customers.
-Use a test day next week. Tick each one off. If one fails, open the run in Make's
-*History* and look at module **6** (what the AI understood) and module **8** (what Make decided).
+Run these from your own WhatsApp before customers use the bot. Pick dates next week (not Sunday).
+If one fails, open the run in Make's *History*: module **6** shows what the AI understood and
+module **8** shows what Make decided. To start from a clean slate, delete your number's record
+in the Data Store.
 
-To start again from a clean slate, delete your phone number's record in the Data Store.
-
-## Booking
-
-| # | Send | Expected |
-|---|---|---|
-| 1 | `Hi` | Welcome, list of 4 services with prices, asks what you'd like |
-| 2 | `What time do you close on Saturday?` | 17:00 answer, no booking started |
-| 3 | `I'd like box braids` | Asks for your name, date and time |
-| 4 | `I'm Thando, next Tuesday at 9` | "Booking request received", correct date, 09:00 – 14:00, R700, bank details. A `PENDING` event appears in Google Calendar |
-| 5 | `Can I also book a wig install?` | "You already have an appointment…" |
-
-## Booking rules (start from a clean record)
+## Instructions and price list
 
 | # | Send | Expected |
 |---|---|---|
-| 6 | `Knotless braids on Sunday at 10, name Lebo` | Closed on Sundays |
-| 7 | `Box braids tomorrow at 15:00, I'm Lebo` | Latest start time is 12:00 |
-| 8 | `Hair treatment tomorrow at 7am, Lebo` | We open at 08:00 |
-| 9 | Book a time that already has an event in the calendar | "That time is already taken" |
+| 1 | `Hi` | Welcome + all 10 services with price, time and latest start + "send ONE message with…" + example |
+| 2 | `How much is hair colouring?` | From R650, about 3 hours, latest start 14:00 |
+| 3 | `Main menu` | The same welcome / price list |
 
-## Payment
+## Booking rules
 
 | # | Send | Expected |
 |---|---|---|
-| 10 | A photo (after test 4) | "Thank you… sent it to the salon". Email with the photo + Approve/Reject links arrives |
-| 11 | Another photo | "I already have your proof of payment" |
-| 12 | A voice note | "I can only read typed messages" |
+| 4 | `Thando, Hair colouring, next Tuesday, 15:00` | "latest start time is 14:00" |
+| 5 | `Thando, Wig making, next Tuesday, 13:30` | "latest start time is 13:00" |
+| 6 | `Thando, Make-up, next Tuesday, 10:15` | "on the hour or half hour" |
+| 7 | `Thando, Resizing, next Tuesday, 07:30` | "We open at 08:00" |
+| 8 | `Thando, Make-up, Sunday, 10:00` | Closed on Sundays |
+| 9 | `Thando, Make-up, 25 December, 10:00` | Closed that day |
+| 10 | `Wig installation` then `Thando` then `next Tuesday at 10` | Asks only for what's missing, then books |
+
+## Several stylists (`stylists` = 4)
+
+| # | Do | Expected |
+|---|---|---|
+| 11 | In Google Calendar, add 3 events next Wednesday 10:00–12:00. Then book `Make-up, next Wednesday, 10:00` | Booked (4th stylist free) |
+| 12 | From a second phone (or after cancelling), book the same time again | "all our stylists are booked" |
+
+## Payment and approval
+
+| # | Do | Expected |
+|---|---|---|
+| 13 | Send a photo after booking | "received your proof of payment"; email arrives with APPROVE / REJECT |
+| 14 | Tap APPROVE | Browser "APPROVED"; WhatsApp "booking confirmed"; calendar title CONFIRMED |
+| 15 | Tap APPROVE again | Browser "Nothing changed" |
 
 ## Reschedule and cancel
 
 | # | Send | Expected |
 |---|---|---|
-| 13 | `Can I change my appointment?` | Asks for the new date and time |
-| 14 | `Make it an hour later` (or the same day, 1 hour later) | "Your appointment has been moved". Old event gone, new one in the calendar |
-| 15 | `Move it to Sunday` | Closed on Sundays, appointment unchanged |
-| 16 | `I want to cancel` | "Are you sure… Reply YES to cancel" |
-| 17 | `No` | Appointment stays |
-| 18 | `Cancel please` then `Yes` | "Has been cancelled". Event deleted from the calendar |
-| 19 | `Yes` again | Normal answer – nothing else is cancelled |
+| 16 | `Can I move my appointment?` | Asks for the new date and time |
+| 17 | A new day and time | "Your appointment has been moved"; old event gone, new one in the calendar |
+| 18 | `cancel` then `no` | Appointment stays |
+| 19 | `cancel` then `yes` | "has been cancelled"; event deleted |

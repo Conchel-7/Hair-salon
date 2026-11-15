@@ -55,3 +55,15 @@ long and random.
   scenario did (search with limit 1, then count the results).
 - Date and time rules now compare real dates instead of text, so "is the appointment over?",
   opening and closing times all use proper date maths.
+
+## Version 3
+
+- All 10 services from the salon poster, with estimated South African prices and durations.
+- A fixed welcome / price list with clear "send ONE message with name, service, date, time"
+  instructions and an example.
+- Every service shows its **latest start time** so appointments always finish by closing time.
+- Start times must be on the hour or half hour.
+- `closed_dates` for public holidays and days off.
+- **Several stylists:** up to `stylists` (default 4) bookings can overlap.
+- A separate **payment approval scenario** that confirms the booking, updates the calendar and
+  messages the customer.
