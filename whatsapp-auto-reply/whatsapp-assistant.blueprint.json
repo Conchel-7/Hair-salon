@@ -489,33 +489,6 @@
                   "name": "Save progress (step = done)"
                 }
               }
-            },
-            {
-              "id": 16,
-              "module": "email:ActionSendEme",
-              "version": 7,
-              "parameters": {
-                "account": null
-              },
-              "mapper": {
-                "from": "",
-                "to": [
-                  "YOUR_EMAIL@example.com"
-                ],
-                "subject": "New WhatsApp lead: {{3.firstName}} {{3.surname}}",
-                "contentType": "html",
-                "html": "<h2>New WhatsApp lead</h2><p><b>Name:</b> {{3.firstName}}<br><b>Surname:</b> {{3.surname}}<br><b>Cellphone:</b> +{{2.from}} (<a href=\"https://wa.me/{{2.from}}\">chat on WhatsApp</a>)<br><b>Email:</b> {{3.email}}<br><b>Message:</b> {{2.text}}</p><p style=\"color:#888;font-size:12px\">Sent automatically by your Conchel AI Automation WhatsApp assistant.</p>",
-                "attachments": [],
-                "cc": [],
-                "bcc": []
-              },
-              "metadata": {
-                "designer": {
-                  "x": 1500,
-                  "y": 600,
-                  "name": "Email me the lead"
-                }
-              }
             }
           ]
         }
