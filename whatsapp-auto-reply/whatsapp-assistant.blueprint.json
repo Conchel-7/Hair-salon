@@ -136,6 +136,13 @@
                       "o": "date:less",
                       "b": "{{addDays(now; -7)}}"
                     }
+                  ],
+                  [
+                    {
+                      "a": "{{3.step}}",
+                      "o": "text:equal",
+                      "b": "abandoned"
+                    }
                   ]
                 ]
               }

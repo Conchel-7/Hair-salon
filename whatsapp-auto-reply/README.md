@@ -182,3 +182,44 @@ On every route, add these two modules:
 ## Notes
 - WhatsApp lets businesses send free-form replies within **24 hours** of the client's last message. This bot always replies right away, so that's fine.
 - Make counts each module run as an operation. One full conversation (5 messages) uses about 25–30 operations.
+
+---
+
+## Unfinished chats (second scenario)
+
+If someone stops answering halfway, a second scenario emails you whatever they gave (always including their number) and marks them `abandoned`.
+If they message again later, the main scenario starts over with the welcome message.
+
+### Change in the main scenario
+On **Route A (New conversation)**, open the filter, click **Add OR rule**, and add: `{{3.step}}` *Text: Equal to* `abandoned`.
+(The blueprint in this folder already includes this rule.)
+
+### New scenario: "Unfinished WhatsApp leads"
+Schedule: **every 60 minutes**.
+
+1. **Data store › Search records**
+   - Data store: `WhatsApp Leads`
+   - Filter (all with AND):
+     - `step` *Text: Not equal to* `done`
+     - `step` *Text: Not equal to* `abandoned`
+     - `updatedAt` *Date: Earlier than* `{{addHours(now; -2)}}`
+   - Limit: 50
+2. **Gmail › Send an email**
+   - To: your email address
+   - Subject: `Unfinished WhatsApp lead: +{{1.key}}`
+   - Body type: Raw HTML. Content:
+     ```html
+     <h2>Unfinished WhatsApp lead</h2>
+     <p>This person stopped answering. Here is what they gave:</p>
+     <p><b>Cellphone:</b> +{{1.key}} (<a href="https://wa.me/{{1.key}}">chat on WhatsApp</a>)<br>
+     <b>Name:</b> {{1.firstName}}<br>
+     <b>Surname:</b> {{1.surname}}<br>
+     <b>Email:</b> {{1.email}}<br>
+     <b>Stopped at question:</b> {{1.step}}<br>
+     <b>Last reply:</b> {{formatDate(1.updatedAt; "DD MMM YYYY HH:mm"; "Africa/Johannesburg")}}</p>
+     ```
+3. **Data store › Add/replace a record**
+   - Data store: `WhatsApp Leads`, Key: `{{1.key}}`, Overwrite: **Yes**
+   - step = `abandoned`, firstName = `{{1.firstName}}`, surname = `{{1.surname}}`, email = `{{1.email}}`, inquiry = `{{1.inquiry}}`, updatedAt = `{{now}}`
+
+The email is sent before the record is marked, so if Gmail fails, the scenario tries again on the next hourly run.
