@@ -36,21 +36,52 @@
         }
       },
       "filter": {
-        "name": "Correct secret token",
+        "name": "Link has a customer and a code",
         "conditions": [
           [
             {
-              "a": "{{1.token}}",
-              "o": "text:equal",
-              "b": "CHANGE_ME"
+              "a": "{{1.key}}",
+              "o": "exist"
             },
             {
-              "a": "{{1.key}}",
+              "a": "{{1.code}}",
               "o": "exist"
             }
           ]
         ]
-      }
+      },
+      "onerror": [
+        {
+          "id": 45,
+          "module": "gateway:WebhookRespond",
+          "version": 1,
+          "parameters": {},
+          "mapper": {
+            "status": "200",
+            "body": "ERROR: nothing was changed because Make could not reach the booking records. Please tap the link again in a minute. If it keeps happening, check this scenario's History in Make.",
+            "headers": []
+          },
+          "metadata": {
+            "designer": {
+              "x": 300,
+              "y": 250
+            }
+          }
+        },
+        {
+          "id": 46,
+          "module": "builtin:Ignore",
+          "version": 1,
+          "parameters": {},
+          "mapper": {},
+          "metadata": {
+            "designer": {
+              "x": 600,
+              "y": 250
+            }
+          }
+        }
+      ]
     },
     {
       "id": 3,
@@ -92,7 +123,7 @@
                 }
               },
               "filter": {
-                "name": "Approve",
+                "name": "Approve (valid code, payment in review)",
                 "conditions": [
                   [
                     {
@@ -108,22 +139,11 @@
                     {
                       "a": "{{2.`add calender_event-id`}}",
                       "o": "exist"
-                    }
-                  ],
-                  [
-                    {
-                      "a": "{{1.action}}",
-                      "o": "text:equal",
-                      "b": "approve"
                     },
                     {
-                      "a": "{{2.status}}",
+                      "a": "{{1.code}}",
                       "o": "text:equal",
-                      "b": "awaiting_payment"
-                    },
-                    {
-                      "a": "{{2.`add calender_event-id`}}",
-                      "o": "exist"
+                      "b": "{{sha1(2.`add calender_event-id` + \"CHANGE_ME\")}}"
                     }
                   ]
                 ]
@@ -167,7 +187,39 @@
                   "y": 0,
                   "name": "Mark confirmed"
                 }
-              }
+              },
+              "onerror": [
+                {
+                  "id": 47,
+                  "module": "gateway:WebhookRespond",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {
+                    "status": "200",
+                    "body": "ERROR: nothing was changed because Make could not reach the booking records. Please tap the link again in a minute. If it keeps happening, check this scenario's History in Make.",
+                    "headers": []
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 1200,
+                      "y": 250
+                    }
+                  }
+                },
+                {
+                  "id": 48,
+                  "module": "builtin:Ignore",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {},
+                  "metadata": {
+                    "designer": {
+                      "x": 1500,
+                      "y": 250
+                    }
+                  }
+                }
+              ]
             },
             {
               "id": 6,
@@ -271,7 +323,7 @@
                 }
               },
               "filter": {
-                "name": "Reject",
+                "name": "Reject (valid code, payment in review)",
                 "conditions": [
                   [
                     {
@@ -283,22 +335,47 @@
                       "a": "{{2.status}}",
                       "o": "text:equal",
                       "b": "payment_review"
-                    }
-                  ],
-                  [
-                    {
-                      "a": "{{1.action}}",
-                      "o": "text:equal",
-                      "b": "reject"
                     },
                     {
-                      "a": "{{2.status}}",
+                      "a": "{{1.code}}",
                       "o": "text:equal",
-                      "b": "awaiting_payment"
+                      "b": "{{sha1(2.`add calender_event-id` + \"CHANGE_ME\")}}"
                     }
                   ]
                 ]
-              }
+              },
+              "onerror": [
+                {
+                  "id": 49,
+                  "module": "gateway:WebhookRespond",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {
+                    "status": "200",
+                    "body": "ERROR: nothing was changed because Make could not reach the booking records. Please tap the link again in a minute. If it keeps happening, check this scenario's History in Make.",
+                    "headers": []
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 900,
+                      "y": 650
+                    }
+                  }
+                },
+                {
+                  "id": 50,
+                  "module": "builtin:Ignore",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {},
+                  "metadata": {
+                    "designer": {
+                      "x": 1200,
+                      "y": 650
+                    }
+                  }
+                }
+              ]
             },
             {
               "id": 9,
@@ -385,7 +462,7 @@
               "parameters": {},
               "mapper": {
                 "status": "200",
-                "body": "Nothing changed. This booking was already handled, cancelled, or could not be found.",
+                "body": "Nothing changed. This link is not valid any more: the payment was already approved or rejected, the booking was cancelled or moved, or the link is incomplete.",
                 "headers": []
               },
               "metadata": {
@@ -410,7 +487,7 @@
     "version": 1,
     "scenario": {
       "roundtrips": 1,
-      "maxErrors": 3,
+      "maxErrors": 10,
       "autoCommit": true,
       "autoCommitTriggerLast": true,
       "sequential": true,

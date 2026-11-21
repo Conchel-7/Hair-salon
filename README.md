@@ -1,5 +1,7 @@
 # Hair Salon – WhatsApp Booking Bot (Make.com)
 
+> **Setting it up? Start with [LAUNCH.md](LAUNCH.md)**, then [TESTING.md](TESTING.md).
+
 A WhatsApp assistant that lets salon customers **ask questions, book, reschedule and cancel
 appointments, and send proof of payment** — built in Make.com with Claude, Google Calendar,
 a Make Data Store and Gmail.
@@ -27,7 +29,7 @@ The new version splits the job in two:
 Because Make (not the AI) writes every message that *promises* something, the bot can't
 accidentally tell a customer they're booked when they're not.
 
-### The flow (35 modules)
+### The flow (32 main modules + 58 safety-net modules)
 
 ```
 1 WhatsApp message in

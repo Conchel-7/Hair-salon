@@ -75,3 +75,18 @@ long and random.
 - The customer is told their stylist's name; the calendar title shows it too.
 - Stylist days off: an `OFF` event in that stylist's calendar.
 - Approval scenario updated to use the right stylist's calendar.
+
+## Version 5 – production hardening
+
+- **A safety net on every module** that talks to Google, WhatsApp, Gmail or the Data Store: the
+  customer gets an apology, the owner gets a "⚠ Booking bot problem" email, and the bot keeps running.
+  The scenario now allows 10 errors in a row before Make could switch it off (was 3).
+- **"Reply YES to confirm"** before a new booking reaches the calendar.
+- **Duplicate protection:** a repeated WhatsApp delivery of the same message is ignored.
+- **One-time approval codes** instead of one shared password: a link only works for its own booking
+  and only while the payment is in review.
+- **Privacy (POPIA):** privacy note in the welcome message, a *delete my data* command, no phone
+  numbers in calendar events, and a daily clean-up scenario that deletes records 30 days after the visit.
+- Customer messages are capped at 1,000 characters before going to the AI, and the AI is told to treat
+  them only as customer messages, never as instructions.
+- A friendly fallback reply so the bot never sends an empty message.
